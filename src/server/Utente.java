@@ -1,20 +1,27 @@
 package server;
 
+import Errori.FriendAlreadyExists;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
+import java.io.Serializable;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class Utente {
-
+@JsonIgnoreProperties(value = { "nickname" })
+public class Utente implements Serializable {
+    private static final long serialVersionUID = 1L;
     public String getNickname() {
         return nickname;
     }
 
-    public void setNickname(String nickname) {
-        this.nickname = nickname;
+    private String nickname;
+
+    public String getPassword() {
+        return password;
     }
 
-    private String nickname;
     private String password;
-    private ConcurrentHashMap<String, Utente> listaAmici;
+    private long punteggioTotale;
+    private ConcurrentHashMap<String, String> listaAmici;
 
     public Utente(){
 
@@ -23,6 +30,13 @@ public class Utente {
     public Utente(String nick, String password){
         this.nickname = nick;
         this.password = password;
+    }
+
+    public synchronized void addFriend(String amico){
+        if(amico == null || amico.equals("")) throw new IllegalArgumentException();
+        if(listaAmici.get(amico) != null) throw new FriendAlreadyExists("Sei già amico");
+
+        listaAmici.putIfAbsent(amico, amico);
     }
 
 }

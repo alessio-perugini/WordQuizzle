@@ -24,6 +24,7 @@ public class UtentiConnessi {
         if(hashListaUtenti.get(user.getNickname()) != null) throw new UserAlreadyExists();
 
         hashListaUtenti.putIfAbsent(user.getNickname(), user);
+
     }
 
     public synchronized void removeUtente(Utente user){
@@ -31,8 +32,13 @@ public class UtentiConnessi {
         hashListaUtenti.remove(user.getNickname());
     }
 
-    public synchronized boolean isConnect(String key){
+    public synchronized boolean isConnected(String key){
         if(key == null || key.length() == 0) throw new IllegalArgumentException();
         return hashListaUtenti.get(key) != null;
+    }
+
+    public Utente getUser(String key){
+        if(key == null || key.length() == 0) throw new IllegalArgumentException();
+        return hashListaUtenti.get(key);
     }
 }
