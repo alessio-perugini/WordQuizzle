@@ -1,0 +1,12 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="WordQuizzle:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/WordQuizzle_jar</output-path>
+    <root id="archive" name="WordQuizzle.jar">
+      <element id="module-output" name="WordQuizzle" />
+      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/jetbrains/annotations/17.0.0/annotations-17.0.0.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/jackson-databind-2.10.1.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/jackson-core-2.10.1.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/jackson-annotations-2.10.1.jar" path-in-jar="/" />
+    </root>
+  </artifact>
+</component>

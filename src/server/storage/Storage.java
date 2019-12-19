@@ -22,10 +22,10 @@ public class Storage {
         gg.putIfAbsent("asd2", new Utente("asd2", "dsa2"));
 
         //TODO Check se esistono i 3 file json
-        writeFirstFile("utenti.json", gg);
+        writeObjectToJSONFile("utenti.json", gg);
         ConcurrentHashMap<String, Utente> lista = (ConcurrentHashMap<String, Utente>)getObjectFromJSONFile("utenti.json");
         lista.putIfAbsent("xD", new Utente("xD", "asd1asd"));
-        writeFirstFile("utenti.json", lista);
+        writeObjectToJSONFile("utenti.json", lista);
 
     }
 
@@ -33,7 +33,7 @@ public class Storage {
 
     }
 
-    public static void writeFirstFile(String filename, Object obj){
+    public static void writeObjectToJSONFile(String filename, Object obj){
         try{
             File file = new File(filename);
             file.createNewFile();
@@ -47,7 +47,7 @@ public class Storage {
                 outWrapChannel.write(bb);
 
                 // Clear resources
-                System.out.println("Remove file, close channels, clear resources");
+                System.out.println("close channels, clear resources");
                 bb.clear();
                 outWrapChannel.close();
             }catch (Exception e){

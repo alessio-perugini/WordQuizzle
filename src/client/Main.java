@@ -9,13 +9,29 @@ import java.nio.charset.StandardCharsets;
 
 public class Main {
 
-    public static void main(String[] args){
+    public static void main(String[] args) {
         try {
             SocketAddress address = new InetSocketAddress("127.0.0.1", 1500);
             SocketChannel client = SocketChannel.open(address);
+            ByteBuffer buffer = ByteBuffer.allocate(1024);
 
-            ByteBuffer buffer = ByteBuffer.allocate(512);
-            byte[] mex = "LOGIN asd dsa\n".getBytes(StandardCharsets.UTF_8);
+            scriviLeggi("LOGIN asd dsa\n", client);
+            scriviLeggi("ADD_FRIEND asd xD\n", client);
+            scriviLeggi("ADD_FRIEND asd xD\n", client);
+            scriviLeggi("LISTA_AMICI asd\n", client);
+            scriviLeggi("LOGOUT asd\n", client);
+
+            client.close();
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
+    }
+
+    public static void scriviLeggi(String messaggio, SocketChannel client) {
+        try {
+            ByteBuffer buffer = ByteBuffer.allocate(1024);
+
+            byte[] mex = messaggio.getBytes(StandardCharsets.UTF_8);
             buffer.put(mex);
             buffer.flip();//Serve per far leggere dall'inizio al server
             client.write(buffer);
@@ -25,7 +41,6 @@ public class Main {
             String response = new String(buffer.array()).trim();
             System.out.println("response=" + response);
             buffer.clear();
-            client.close();
         } catch (IOException ex) {
             ex.printStackTrace();
         }

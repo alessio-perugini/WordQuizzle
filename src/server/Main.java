@@ -1,6 +1,7 @@
 package server;
 
 import server.rmi.RegistrazioneServer;
+import server.storage.Storage;
 
 public class Main {
     static int RMIPort = 30000;
@@ -9,7 +10,5 @@ public class Main {
         regServer.start();
         Server objServer = new Server(1500);
         objServer.start();
-
-
     }
 }

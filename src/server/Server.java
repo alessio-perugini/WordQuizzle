@@ -1,5 +1,7 @@
 package server;
 
+import server.storage.Storage;
+
 import java.io.IOException;
 import java.net.*;
 import java.util.concurrent.ExecutorService;
@@ -15,9 +17,16 @@ public class Server {
 
     public void start(){
         ExecutorService ex;
+
         try (ServerSocket server = new ServerSocket();) {
             server.bind(new InetSocketAddress(InetAddress.getByName("localhost"), PORT));
             ex = Executors.newFixedThreadPool(nThreads);
+
+            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+                System.out.println("Shutdown hook ran!");
+                ex.shutdownNow();
+                Storage.writeObjectToJSONFile("utenti.json", UtentiConnessi.getInstance());
+            }));
 
             while (true) {
                 System.out.println("Waiting for clients...");

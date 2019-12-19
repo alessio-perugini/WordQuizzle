@@ -108,6 +108,7 @@ public class Worker implements Runnable {
     public void aggiungi_amico(String nickUtente, String nickAmico) {
         if(nickUtente == null || nickUtente.length() == 0) throw new IllegalArgumentException();
         if(nickAmico == null || nickAmico.length() == 0) throw new IllegalArgumentException("nickAmico arrato");
+        if(nickUtente.equals(nickAmico)) throw new IllegalArgumentException("Non puoi essere amico di te stesso");
 
         UtentiConnessi connectedUSers = UtentiConnessi.getInstance();
         Utente profileRichiedente = connectedUSers.getUser(nickUtente);
@@ -164,7 +165,7 @@ public class Worker implements Runnable {
     private void sendResponseToClient(String testo){
         if(testo == null) throw new IllegalArgumentException();
         try{
-            outToClient.write(testo.getBytes(StandardCharsets.UTF_8), 0, testo.length());
+            outToClient.write((testo + "\n").getBytes(StandardCharsets.UTF_8), 0, testo.length() + 1);
             outToClient.flush();
         }catch (IOError | IOException ecc){
             ecc.printStackTrace();
