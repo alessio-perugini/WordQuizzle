@@ -1,4 +1,4 @@
-package Errori;
+package errori;
 
 public class FriendNotFound extends RuntimeException {
     public FriendNotFound(){

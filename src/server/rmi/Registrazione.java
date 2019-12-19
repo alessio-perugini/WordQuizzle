@@ -1,7 +1,7 @@
-package server.RMI;
+package server.rmi;
 
-import Errori.PasswordNotValid;
-import Errori.UserAlreadyExists;
+import errori.InvalidPassword;
+import errori.UserAlreadyExists;
 import server.UtentiConnessi;
 import server.Utente;
 
@@ -20,7 +20,7 @@ public class Registrazione extends RemoteServer implements RegistrazioneService 
     @Override
     public boolean registra_utente(String nickName, String password) throws RemoteException, IllegalArgumentException, UserAlreadyExists {
         if(nickName == null || nickName.length() == 0) throw new IllegalArgumentException("nickname non valido");
-        if(password == null || password.length() < 6) throw new PasswordNotValid("Password non valida");
+        if(password == null || password.length() < 6) throw new InvalidPassword("Password non valida");
 
         Utente user = new Utente(nickName, password);
 

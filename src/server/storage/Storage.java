@@ -1,28 +1,22 @@
-package server.Storage;
+package server.storage;
 
-import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
-import com.fasterxml.jackson.databind.SequenceWriter;
 import server.Utente;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 public class Storage {
-    public Storage(){
+    public void test(){
         ConcurrentHashMap<String, Utente>  gg = new ConcurrentHashMap<>();
         gg.putIfAbsent("asd", new Utente("asd", "dsa"));
         gg.putIfAbsent("asd2", new Utente("asd2", "dsa2"));
@@ -35,7 +29,11 @@ public class Storage {
 
     }
 
-    public void writeFirstFile(String filename, Object obj){
+    public Storage(){
+
+    }
+
+    public static void writeFirstFile(String filename, Object obj){
         try{
             File file = new File(filename);
             file.createNewFile();
@@ -60,7 +58,7 @@ public class Storage {
         }
     }
 
-    public String objectToJSON(Object obj){
+    public static String concurrentMapToJSON(ConcurrentMap<String, String> obj){
         String json = null;
         try {
             ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
@@ -74,7 +72,21 @@ public class Storage {
         return json;
     }
 
-    public Object getObjectFromJSONFile(String path){
+    public static String objectToJSON(Object obj){
+        String json = null;
+        try {
+            ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
+            json = ow.writeValueAsString(obj);
+            System.out.println(json);
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return json;
+    }
+
+    public static Object getObjectFromJSONFile(String path){
         if(path == null || path.equals("")) throw new IllegalArgumentException();
 
         try {

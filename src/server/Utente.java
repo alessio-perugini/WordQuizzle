@@ -1,6 +1,6 @@
 package server;
 
-import Errori.FriendAlreadyExists;
+import errori.FriendAlreadyExists;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import java.io.Serializable;
@@ -20,7 +20,17 @@ public class Utente implements Serializable {
     }
 
     private String password;
+
+    public long getPunteggioTotale() {
+        return punteggioTotale;
+    }
+
     private long punteggioTotale;
+
+    public ConcurrentHashMap<String, String> getListaAmici() {
+        return listaAmici;
+    }
+
     private ConcurrentHashMap<String, String> listaAmici;
 
     public Utente(){

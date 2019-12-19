@@ -1,12 +1,13 @@
 package server;
 
-import Errori.FriendAlreadyExists;
-import Errori.FriendNotFound;
-import Errori.UserAlreadyLoggedIn;
+import errori.*;
+import server.storage.Storage;
 
 import java.io.*;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
 import java.util.StringTokenizer;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class Worker implements Runnable {
 
@@ -23,53 +24,44 @@ public class Worker implements Runnable {
             outToClient = new BufferedOutputStream(client.getOutputStream());
 
             String message = inFromClient.readLine();
-            if (message == null) {
-                client.close();
-                return;
-            }
-            
-            StringTokenizer tokenizedLine = new StringTokenizer(message);
 
-            if(tokenizedLine.nextToken().equals("LOGIN")){
-                String username = tokenizedLine.nextToken();
-                String pw = tokenizedLine.nextToken();
+            while((message = inFromClient.readLine()) != null){
+                StringTokenizer tokenizedLine = new StringTokenizer(message);
+                String pw, nickUtente, nickAmico;
+                switch (tokenizedLine.nextToken()){
+                    case "LOGIN":
+                        nickUtente = tokenizedLine.nextToken();
+                        pw = tokenizedLine.nextToken();
 
-                login(username, pw);
-            }
+                        login(nickUtente, pw);
+                        break;
+                    case "LOGOUT":
+                        nickUtente = tokenizedLine.nextToken();
 
-            if (tokenizedLine.nextToken().equals("LOGOUT")) {
-                String username = tokenizedLine.nextToken();
+                        logout(nickUtente);
+                        break;
+                    case "ADD_FRIEND":
+                        nickUtente = tokenizedLine.nextToken();
+                        nickAmico = tokenizedLine.nextToken();
 
-                logout(username);
-            }
-
-            if (tokenizedLine.nextToken().equals("ADD_FRIEND")) {
-                String nickUtente = tokenizedLine.nextToken();
-                String nickAmico = tokenizedLine.nextToken();
-
-                aggiungi_amico(nickUtente, nickAmico);
-            }
-            if (tokenizedLine.nextToken().equals("LISTA_AMICI")) {
-                String nickUtente = tokenizedLine.nextToken();
-                lista_amici(nickUtente);
-            }
-            if (tokenizedLine.nextToken().equals("SFIDA")) { //TODO UDP request
-
-            }
-            if (tokenizedLine.nextToken().equals("MOSTRA_SCORE")) {
-                String nickUtente = tokenizedLine.nextToken();
-                mostra_punteggio(nickUtente);
-            }
-            if (tokenizedLine.nextToken().equals("MOSTRA_CLASSIFICA")) {
-                String nickUtente = tokenizedLine.nextToken();
-                mostra_classifica(nickUtente);
-            }
-
-            // read and print out the rest of the request
-            message = inFromClient.readLine();
-            while (message != null) {
-                System.out.println("- Request: " + message);
-                message = inFromClient.readLine();
+                        aggiungi_amico(nickUtente, nickAmico);
+                        break;
+                    case "LISTA_AMICI":
+                        nickUtente = tokenizedLine.nextToken();
+                        lista_amici(nickUtente);
+                        break;
+                    case "SFIDA":
+                        //TODO UDP request
+                        break;
+                    case "MOSTRA_SCORE":
+                        nickUtente = tokenizedLine.nextToken();
+                        mostra_punteggio(nickUtente);
+                        break;
+                    case "MOSTRA_CLASSIFICA":
+                        nickUtente = tokenizedLine.nextToken();
+                        mostra_classifica(nickUtente);
+                        break;
+                }
             }
 
             client.close();
@@ -86,6 +78,19 @@ public class Worker implements Runnable {
         if(UtentiConnessi.getInstance().isConnected(nickUtente)) throw new UserAlreadyLoggedIn();
 
         //TODO check se esiste nel file
+        ConcurrentHashMap<String, Utente> lsUtenti =  (ConcurrentHashMap<String, Utente>)Storage.getObjectFromJSONFile("utenti.json");
+        Utente profilo = lsUtenti.get(nickUtente);
+
+        try{
+            if(profilo == null) throw  new UserDoesntExists("L'utente inserito non esiste");
+            if(!profilo.getPassword().equals(password)) throw new WrongPassword("Password errata");
+        }catch (UserDoesntExists e){
+            sendResponseToClient(e.getMessage());
+            return;
+        }catch (WrongPassword e2){
+            sendResponseToClient(e2.getMessage());
+            return;
+        }
 
         sendResponseToClient("Login eseguito con successo");
     }
@@ -93,7 +98,7 @@ public class Worker implements Runnable {
     public void logout(String nickUtente) {
         if(nickUtente == null || nickUtente.length() == 0) throw new IllegalArgumentException();
         if(!UtentiConnessi.getInstance().isConnected(nickUtente)) throw new UserAlreadyLoggedIn();
-
+        //TODO salvare il file json
         sendResponseToClient("Logout eseguito con successo");
     }
 
@@ -123,6 +128,12 @@ public class Worker implements Runnable {
     public void lista_amici(String nickUtente) {
         if(nickUtente == null || nickUtente.length() == 0) throw new IllegalArgumentException("nickUtente arrato");
 
+        Utente profilo = UtentiConnessi.getInstance().getUser(nickUtente);
+        if(profilo == null) throw new UserDoesntExists("L'utente cercato non esiste");
+
+        ConcurrentHashMap<String,String> listaAmici = profilo.getListaAmici();
+        String listaAmiciAsJson = Storage.concurrentMapToJSON(listaAmici);
+        sendResponseToClient(listaAmiciAsJson);//TODO checkkare se passare una lista ad un Object lo fa crashare
     }
 
     public void sfida(String nickUtente, String nickAmico) {
@@ -132,17 +143,25 @@ public class Worker implements Runnable {
     public void mostra_punteggio(String nickUtente) {
         if(nickUtente == null || nickUtente.length() == 0) throw new IllegalArgumentException("nickUtente arrato");
 
+        Utente profilo = UtentiConnessi.getInstance().getUser(nickUtente);
+        if(profilo == null) throw new UserDoesntExists("L'utente cercato non esiste");
+
+        sendResponseToClient("Punteggio: " + profilo.getPunteggioTotale());
     }
     
     public void mostra_classifica(String nickUtente) {
         if(nickUtente == null || nickUtente.length() == 0) throw new IllegalArgumentException("nickUtente arrato");
+
+        Utente profilo = UtentiConnessi.getInstance().getUser(nickUtente);
+        if(profilo == null) throw new UserDoesntExists("L'utente cercato non esiste");
+
 
     }
 
     private void sendResponseToClient(String testo){
         if(testo == null) throw new IllegalArgumentException();
         try{
-            outToClient.write(testo.getBytes(), 0, testo.length());
+            outToClient.write(testo.getBytes(StandardCharsets.UTF_8), 0, testo.length());
         }catch (IOError | IOException ecc){
             ecc.printStackTrace();
         }

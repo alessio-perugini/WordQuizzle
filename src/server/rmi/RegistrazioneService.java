@@ -1,6 +1,6 @@
-package server.RMI;
+package server.rmi;
 
-import Errori.UserAlreadyExists;
+import errori.UserAlreadyExists;
 
 import java.rmi.Remote;
 import java.rmi.RemoteException;

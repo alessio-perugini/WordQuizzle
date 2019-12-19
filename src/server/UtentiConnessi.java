@@ -1,6 +1,6 @@
 package server;
 
-import Errori.UserAlreadyExists;
+import errori.UserAlreadyExists;
 
 import java.util.concurrent.ConcurrentHashMap;
 

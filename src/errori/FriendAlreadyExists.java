@@ -1,4 +1,4 @@
-package Errori;
+package errori;
 
 public class FriendAlreadyExists extends RuntimeException {
     public FriendAlreadyExists(){

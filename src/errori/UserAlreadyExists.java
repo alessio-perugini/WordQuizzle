@@ -1,4 +1,4 @@
-package Errori;
+package errori;
 
 public class UserAlreadyExists extends RuntimeException {
     public UserAlreadyExists(){

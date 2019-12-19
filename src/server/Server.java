@@ -1,10 +1,7 @@
 package server;
 
-import server.RMI.RegistrazioneServer;
-
 import java.io.IOException;
 import java.net.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 

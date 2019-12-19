@@ -1,4 +1,4 @@
-package Errori;
+package errori;
 
 public class UserAlreadyLoggedIn extends RuntimeException {
     public UserAlreadyLoggedIn(){
