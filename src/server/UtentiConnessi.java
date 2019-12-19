@@ -1,6 +1,7 @@
 package server;
 
 import errori.UserAlreadyExists;
+import server.storage.Storage;
 
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -11,7 +12,7 @@ public class UtentiConnessi {
     private ConcurrentHashMap<String, Utente>  hashListaUtenti;
 
     private UtentiConnessi(){
-        hashListaUtenti = new ConcurrentHashMap<>();
+        hashListaUtenti = (ConcurrentHashMap<String, Utente>)Storage.getObjectFromJSONFile("utenti.json");
     }
 
     public static synchronized UtentiConnessi getInstance(){
@@ -34,11 +35,19 @@ public class UtentiConnessi {
 
     public synchronized boolean isConnected(String key){
         if(key == null || key.length() == 0) throw new IllegalArgumentException();
-        return hashListaUtenti.get(key) != null;
+        return hashListaUtenti.get(key).isConnesso();
     }
 
     public Utente getUser(String key){
         if(key == null || key.length() == 0) throw new IllegalArgumentException();
         return hashListaUtenti.get(key);
+    }
+
+    public synchronized void setConnected(String key, boolean value){
+        if(key == null || key.length() == 0) throw new IllegalArgumentException();
+
+        Utente profilo = hashListaUtenti.get(key);
+        profilo.setConnesso(value);
+        hashListaUtenti.replace(key, profilo);
     }
 }

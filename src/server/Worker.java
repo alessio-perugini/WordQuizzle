@@ -13,6 +13,7 @@ public class Worker implements Runnable {
 
     private Socket client;
     private BufferedOutputStream outToClient;
+    private Utente socUser;
 
     public Worker(Socket c){
         this.client = c;
@@ -23,7 +24,7 @@ public class Worker implements Runnable {
             BufferedReader inFromClient = new BufferedReader(new InputStreamReader(client.getInputStream()));
             outToClient = new BufferedOutputStream(client.getOutputStream());
 
-            String message = inFromClient.readLine();
+            String message;
 
             while((message = inFromClient.readLine()) != null){
                 StringTokenizer tokenizedLine = new StringTokenizer(message);
@@ -65,6 +66,7 @@ public class Worker implements Runnable {
             }
 
             client.close();
+            UtentiConnessi.getInstance().setConnected(socUser.getNickname(), false);
             inFromClient.close();
             System.out.println("Client closed connection");
         }catch (IOException ecc){
@@ -77,9 +79,7 @@ public class Worker implements Runnable {
         if(password == null || password.length() == 0) throw new IllegalArgumentException();
         if(UtentiConnessi.getInstance().isConnected(nickUtente)) throw new UserAlreadyLoggedIn();
 
-        //TODO check se esiste nel file
-        ConcurrentHashMap<String, Utente> lsUtenti =  (ConcurrentHashMap<String, Utente>)Storage.getObjectFromJSONFile("utenti.json");
-        Utente profilo = lsUtenti.get(nickUtente);
+        Utente profilo = UtentiConnessi.getInstance().getUser(nickUtente);
 
         try{
             if(profilo == null) throw  new UserDoesntExists("L'utente inserito non esiste");
@@ -92,13 +92,16 @@ public class Worker implements Runnable {
             return;
         }
 
+        UtentiConnessi.getInstance().setConnected(nickUtente, true);
+        this.socUser = profilo;
         sendResponseToClient("Login eseguito con successo");
     }
     
     public void logout(String nickUtente) {
         if(nickUtente == null || nickUtente.length() == 0) throw new IllegalArgumentException();
         if(!UtentiConnessi.getInstance().isConnected(nickUtente)) throw new UserAlreadyLoggedIn();
-        //TODO salvare il file json
+
+        UtentiConnessi.getInstance().setConnected(nickUtente, false);
         sendResponseToClient("Logout eseguito con successo");
     }
 
@@ -162,6 +165,7 @@ public class Worker implements Runnable {
         if(testo == null) throw new IllegalArgumentException();
         try{
             outToClient.write(testo.getBytes(StandardCharsets.UTF_8), 0, testo.length());
+            outToClient.flush();
         }catch (IOError | IOException ecc){
             ecc.printStackTrace();
         }

@@ -15,7 +15,7 @@ public class Main {
             SocketChannel client = SocketChannel.open(address);
 
             ByteBuffer buffer = ByteBuffer.allocate(512);
-            byte[] mex = "LOGIN asd dsa2\n".getBytes(StandardCharsets.UTF_8);
+            byte[] mex = "LOGIN asd dsa\n".getBytes(StandardCharsets.UTF_8);
             buffer.put(mex);
             buffer.flip();//Serve per far leggere dall'inizio al server
             client.write(buffer);

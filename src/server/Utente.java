@@ -6,7 +6,6 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import java.io.Serializable;
 import java.util.concurrent.ConcurrentHashMap;
 
-@JsonIgnoreProperties(value = { "nickname" })
 public class Utente implements Serializable {
     private static final long serialVersionUID = 1L;
     public String getNickname() {
@@ -32,6 +31,16 @@ public class Utente implements Serializable {
     }
 
     private ConcurrentHashMap<String, String> listaAmici;
+
+    public boolean isConnesso() {
+        return connesso;
+    }
+
+    public void setConnesso(boolean connesso) {
+        this.connesso = connesso;
+    }
+
+    private boolean connesso;
 
     public Utente(){
 
