@@ -22,6 +22,8 @@ public class Main {
             scriviLeggi("ADD_FRIEND asd boia\n", client);
             scriviLeggi("ADD_FRIEND asd xD\n", client);
             scriviLeggi("LISTA_AMICI asd\n", client);
+            scriviLeggi("MOSTRA_SCORE asd\n", client);
+            scriviLeggi("MOSTRA_CLASSIFICA asd\n", client);
             scriviLeggi("LOGOUT asd\n", client);
 
             client.close();
@@ -33,7 +35,7 @@ public class Main {
     public static void scriviLeggi(String messaggio, SocketChannel client) {
         try {
             ByteBuffer buffer = ByteBuffer.allocate(1024);
-
+            messaggio += "\n";
             byte[] mex = messaggio.getBytes(StandardCharsets.UTF_8);
             buffer.put(mex);
             buffer.flip();//Serve per far leggere dall'inizio al server

@@ -6,7 +6,7 @@ import server.storage.Storage;
 import java.io.*;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
-import java.util.StringTokenizer;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class Worker implements Runnable {
@@ -29,7 +29,7 @@ public class Worker implements Runnable {
             while ((message = inFromClient.readLine()) != null) {
                 StringTokenizer tokenizedLine = new StringTokenizer(message);
                 String pw, nickUtente, nickAmico;
-                //TODO aggiungere try cath ad ogni funzione così che faccio solo e.getmassage e manda il mex d'errore
+
                 switch (tokenizedLine.nextToken()) {
                     case "LOGIN":
                         nickUtente = tokenizedLine.nextToken();
@@ -43,8 +43,11 @@ public class Worker implements Runnable {
                         break;
                     case "LOGOUT":
                         nickUtente = tokenizedLine.nextToken();
-
-                        logout(nickUtente);
+                        try{
+                            logout(nickUtente);
+                        }catch (Exception e){
+                            sendResponseToClient(e.getMessage());
+                        }
                         break;
                     case "ADD_FRIEND":
                         nickUtente = tokenizedLine.nextToken();
@@ -57,28 +60,40 @@ public class Worker implements Runnable {
                         break;
                     case "LISTA_AMICI":
                         nickUtente = tokenizedLine.nextToken();
-                        lista_amici(nickUtente);
+                        try{
+                            lista_amici(nickUtente);
+                        }catch (Exception e){
+                            sendResponseToClient(e.getMessage());
+                        }
                         break;
                     case "SFIDA":
                         //TODO UDP request
                         break;
                     case "MOSTRA_SCORE":
                         nickUtente = tokenizedLine.nextToken();
-                        mostra_punteggio(nickUtente);
+                        try{
+                            mostra_punteggio(nickUtente);
+                        }catch (Exception e){
+                            sendResponseToClient(e.getMessage());
+                        }
                         break;
                     case "MOSTRA_CLASSIFICA":
                         nickUtente = tokenizedLine.nextToken();
-                        mostra_classifica(nickUtente);
+                        try{
+                            mostra_classifica(nickUtente);
+                        }catch (Exception e){
+                            sendResponseToClient(e.getMessage());
+                        }
                         break;
                 }
             }
 
             client.close();
-            UtentiConnessi.getInstance().setConnected(socUser.getNickname(), false);
+            UtentiConnessi.getInstance().setConnected(socUser.getNickname(), false); //Se crasha lo disconnette
             inFromClient.close();
             System.out.println("Client closed connection");
         } catch (IOException ecc) {
-
+            ecc.printStackTrace();
         }
     }
 
@@ -129,8 +144,8 @@ public class Worker implements Runnable {
         if (profilo == null) throw new UserDoesntExists("L'utente cercato non esiste");
 
         ConcurrentHashMap<String, String> listaAmici = profilo.getListaAmici();
-        String listaAmiciAsJson = Storage.concurrentMapToJSON(listaAmici);
-        sendResponseToClient(listaAmiciAsJson);//TODO checkkare se passare una lista ad un Object lo fa crashare
+        String listaAmiciAsJson = Storage.objectToJSON(listaAmici);
+        sendResponseToClient(listaAmiciAsJson);
     }
 
     public void sfida(String nickUtente, String nickAmico) {
@@ -152,11 +167,29 @@ public class Worker implements Runnable {
         Utente profilo = UtentiConnessi.getInstance().getUser(nickUtente);
         if (profilo == null) throw new UserDoesntExists("L'utente cercato non esiste");
 
+        if(profilo.getListaAmici().isEmpty()) {
+            //ritorna solo il suo punteggio
 
+            return;
+        }
+
+        ArrayList<Utente> classificaAmici = new ArrayList<>();
+        classificaAmici.add(profilo);
+
+        for (Iterator<String> i = profilo.getListaAmici().values().iterator(); i.hasNext();) {
+            String keyAmico = i.next();
+            Utente amico = UtentiConnessi.getInstance().getUser(keyAmico);
+            classificaAmici.add(amico);
+        }
+
+        classificaAmici.sort(Comparator.comparing(Utente::getPunteggioTotale).reversed());
+
+        sendResponseToClient(Storage.objectToJSON(classificaAmici));
     }
 
     private void sendResponseToClient(String testo) {
         if (testo == null) throw new IllegalArgumentException();
+
         try {
             outToClient.write((testo + "\n").getBytes(StandardCharsets.UTF_8), 0, testo.length() + 1);
             outToClient.flush();
