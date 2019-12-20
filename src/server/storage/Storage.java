@@ -6,10 +6,12 @@ import com.fasterxml.jackson.databind.ObjectWriter;
 import server.Utente;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.concurrent.ConcurrentHashMap;
@@ -51,10 +53,10 @@ public class Storage {
                 bb.clear();
                 outWrapChannel.close();
             }catch (Exception e){
-
+                e.printStackTrace();
             }
         }catch (Exception e){
-
+            e.printStackTrace();
         }
     }
 
@@ -88,10 +90,18 @@ public class Storage {
 
     public static Object getObjectFromJSONFile(String path){
         if(path == null || path.equals("")) throw new IllegalArgumentException();
+        try{
+            FileChannel.open(Paths.get(path), StandardOpenOption.READ);
+        }catch (IOException fe){
+            ConcurrentHashMap<String, Utente> appo = new ConcurrentHashMap<>();
+            //appo.put("", new Utente());
+            writeObjectToJSONFile(path, appo);
+        }
 
         try {
             //TODO migliroare con il buffered stream
             FileChannel inChannel = FileChannel.open(Paths.get(path), StandardOpenOption.READ);
+            //TODO gestire se non esiste il file
             ByteBuffer buffer = ByteBuffer.allocate(2048);
             boolean stop = false;
 

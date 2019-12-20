@@ -52,7 +52,7 @@ public class Utente implements Serializable {
     }
 
     public synchronized void addFriend(String amico){
-        if(amico == null || amico.equals("")) throw new IllegalArgumentException();
+        if(amico == null || amico.equals("")) throw new IllegalArgumentException("Nome amico non valido");
         if(listaAmici == null) listaAmici = new ConcurrentHashMap<>();
         if(listaAmici.get(amico) != null) throw new FriendAlreadyExists("Sei già amico");
 

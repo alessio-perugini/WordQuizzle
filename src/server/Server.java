@@ -15,18 +15,13 @@ public class Server {
         PORT = (port > 0) ? port : PORT;
     }
 
-    public void start(){
+    public void start() {
         ExecutorService ex;
 
         try (ServerSocket server = new ServerSocket();) {
             server.bind(new InetSocketAddress(InetAddress.getByName("localhost"), PORT));
             ex = Executors.newFixedThreadPool(nThreads);
-
-            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-                System.out.println("Shutdown hook ran!");
-                ex.shutdownNow();
-                Storage.writeObjectToJSONFile("utenti.json", UtentiConnessi.getInstance());
-            }));
+            SalvaSuFileHandleSIGTERM(ex); //TODO magari fare una variabile globale che quando c'è una cosa nuova si setta a true così salva farla atomica
 
             while (true) {
                 System.out.println("Waiting for clients...");
@@ -41,5 +36,33 @@ public class Server {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public void SalvaSuFileHandleSIGTERM(ExecutorService ex){
+        Thread thread = new Thread(new Thread(() -> {
+            try{
+                Thread.sleep(20);
+                Storage.writeObjectToJSONFile("utenti.json", UtentiConnessi.getInstance().getHashListaUtenti());
+            }catch (InterruptedException e){
+                e.printStackTrace();
+            }
+        }));
+
+        thread.start();
+
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            System.out.println("Shutdown hook ran!");
+            ex.shutdownNow();
+            Storage.writeObjectToJSONFile("utenti.json", UtentiConnessi.getInstance().getHashListaUtenti());
+        }));
+
+        try{
+            thread.join();
+            thread.interrupt();
+        }catch (InterruptedException ecc){
+            System.out.println("Interrupt ricevuto " + ecc.getMessage());
+        }
+
+
     }
 }
