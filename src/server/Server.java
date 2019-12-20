@@ -43,6 +43,7 @@ public class Server {
             try{
                 Thread.sleep(20);
                 Storage.writeObjectToJSONFile("utenti.json", UtentiConnessi.getInstance().getHashListaUtenti());
+                System.out.println("LOG: Salvataggio completato.");
             }catch (InterruptedException e){
                 e.printStackTrace();
             }
@@ -53,16 +54,14 @@ public class Server {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             System.out.println("Shutdown hook ran!");
             ex.shutdownNow();
+            try{
+                thread.join();
+                thread.interrupt();
+            }catch (InterruptedException ecc){
+                System.out.println("Interrupt ricevuto " + ecc.getMessage());
+            }
             Storage.writeObjectToJSONFile("utenti.json", UtentiConnessi.getInstance().getHashListaUtenti());
+            System.out.println("LOG: Salvataggio completato.");
         }));
-
-        try{
-            thread.join();
-            thread.interrupt();
-        }catch (InterruptedException ecc){
-            System.out.println("Interrupt ricevuto " + ecc.getMessage());
-        }
-
-
     }
 }

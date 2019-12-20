@@ -24,9 +24,11 @@ public class Registrazione extends RemoteServer implements RegistrazioneService 
 
         Utente user = new Utente(nickName, password);
 
-        this.lsUtenti.addUtente(user);
-
-        return false;
+        try{
+            return this.lsUtenti.addUtente(user) != null;
+        }catch (Exception ecc){
+            ecc.printStackTrace();
+            return false;
+        }
     }
-
 }

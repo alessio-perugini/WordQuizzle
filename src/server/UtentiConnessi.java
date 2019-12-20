@@ -26,13 +26,11 @@ public class UtentiConnessi {
         return instance;
     }
 
-    public synchronized void addUtente(Utente user){
+    public synchronized Utente addUtente(Utente user){
         if(user == null) throw new IllegalArgumentException();
-        if(hashListaUtenti.isEmpty()) throw new UserDoesntExists();
-        if(hashListaUtenti.get(user.getNickname()) != null) throw new UserAlreadyExists();
+        if(!hashListaUtenti.isEmpty() && hashListaUtenti.get(user.getNickname()) != null) throw new UserAlreadyExists();
 
-        hashListaUtenti.putIfAbsent(user.getNickname(), user);
-
+        return hashListaUtenti.putIfAbsent(user.getNickname(), user);
     }
 
     public synchronized void removeUtente(Utente user){
@@ -44,7 +42,7 @@ public class UtentiConnessi {
 
     public synchronized boolean isConnected(String key){
         if(key == null || key.length() == 0) throw new IllegalArgumentException();
-        if(hashListaUtenti.isEmpty()) throw new UserDoesntExists("L'utente non esiste");
+        if(hashListaUtenti.isEmpty() || getUser(key) == null) throw new UserDoesntExists("L'utente non esiste");
 
         return hashListaUtenti.get(key).isConnesso();
     }

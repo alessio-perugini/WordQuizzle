@@ -15,8 +15,11 @@ public class Main {
             SocketChannel client = SocketChannel.open(address);
             ByteBuffer buffer = ByteBuffer.allocate(1024);
 
-            scriviLeggi("LOGIN asd dsa\n", client);
-            scriviLeggi("ADD_FRIEND asd xD\n", client);
+            RmiClient rmiReg = new RmiClient();
+            System.out.println(rmiReg.registra_utente("asd", "dsadsadsa"));
+            System.out.println(rmiReg.registra_utente("boia", "dsaasdasd"));
+            scriviLeggi("LOGIN asd dsadsadsa\n", client);
+            scriviLeggi("ADD_FRIEND asd boia\n", client);
             scriviLeggi("ADD_FRIEND asd xD\n", client);
             scriviLeggi("LISTA_AMICI asd\n", client);
             scriviLeggi("LOGOUT asd\n", client);
