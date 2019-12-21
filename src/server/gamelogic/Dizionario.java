@@ -10,18 +10,25 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.PriorityBlockingQueue;
 
 public class Dizionario {
     private ArrayList<String> dizionario;
+    private static Dizionario instance;
 
     public ArrayList<String> getDizionario() {
         return dizionario;
     }
 
-    public Dizionario(){
+    private Dizionario(){
         this.dizionario = new ArrayList<>();
         loadDictionaryFromFile(Settings.FILE_DIZIONARIO);
+    }
+
+    public static synchronized Dizionario getInstance(){
+        if(instance == null) instance = new Dizionario();
+        return instance;
     }
 
     private void loadDictionaryFromFile(String path){

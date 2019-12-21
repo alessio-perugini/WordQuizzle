@@ -38,13 +38,10 @@ public class Sfida {
 
         Random rand = new Random();
         this.idSfida = rand.nextInt();
-        Dizionario dict = new Dizionario(); //TODO creare singleton
         this.K_paroleDaInviare = rand.nextInt(20);
-        dict.getNwordsFromDictionary(K_paroleDaInviare);
+        Dizionario.getInstance().getNwordsFromDictionary(K_paroleDaInviare);
         this.userSfidante = userSfidante;
         this.userSfidato = userSfidato;
-
-
     }
 
 
