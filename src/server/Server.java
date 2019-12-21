@@ -1,26 +1,19 @@
 package server;
 
 import server.storage.Storage;
-
 import java.io.IOException;
 import java.net.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class Server {
-    int PORT = 1500;
-    private int nThreads = 100;
-
-    public Server(int port){
-        PORT = (port > 0) ? port : PORT;
-    }
 
     public void start() {
         ExecutorService ex;
 
         try (ServerSocket server = new ServerSocket();) {
-            server.bind(new InetSocketAddress(InetAddress.getByName("localhost"), PORT));
-            ex = Executors.newFixedThreadPool(nThreads);
+            server.bind(new InetSocketAddress(InetAddress.getByName("localhost"), Settings.TCP_PORT));
+            ex = Executors.newFixedThreadPool(Settings.N_THREADS_THREAD_POOL);
             SalvaSuFileHandleSIGTERM(ex); //TODO magari fare una variabile globale che quando c'è una cosa nuova si setta a true così salva farla atomica
 
             while (true) {

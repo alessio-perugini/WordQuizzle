@@ -149,7 +149,11 @@ public class Worker implements Runnable {
     }
 
     public void sfida(String nickUtente, String nickAmico) {
+        if (nickUtente == null || nickUtente.length() == 0) throw new IllegalArgumentException("nickUtente arrato");
+        if (nickAmico == null || nickAmico.length() == 0) throw new IllegalArgumentException("nickAmico arrato");
+        if (nickUtente.equals(nickAmico)) throw new IllegalArgumentException("Non puoi essere amico di te stesso");
 
+        //TODO mandare richiesta UDP all'amico se accetta poi spawno gli oggetti Sfida
     }
 
     public void mostra_punteggio(String nickUtente) {
@@ -167,22 +171,18 @@ public class Worker implements Runnable {
         Utente profilo = UtentiConnessi.getInstance().getUser(nickUtente);
         if (profilo == null) throw new UserDoesntExists("L'utente cercato non esiste");
 
-        if(profilo.getListaAmici().isEmpty()) {
-            //ritorna solo il suo punteggio
-
-            return;
-        }
-
         ArrayList<Utente> classificaAmici = new ArrayList<>();
         classificaAmici.add(profilo);
 
-        for (Iterator<String> i = profilo.getListaAmici().values().iterator(); i.hasNext();) {
-            String keyAmico = i.next();
-            Utente amico = UtentiConnessi.getInstance().getUser(keyAmico);
-            classificaAmici.add(amico);
-        }
+        if(!profilo.getListaAmici().isEmpty()) { //se non ha amici ritorna solo il suo score saltando questo if
+            for (Iterator<String> i = profilo.getListaAmici().values().iterator(); i.hasNext();) {
+                String keyAmico = i.next();
+                Utente amico = UtentiConnessi.getInstance().getUser(keyAmico);
+                classificaAmici.add(amico);
+            }
 
-        classificaAmici.sort(Comparator.comparing(Utente::getPunteggioTotale).reversed());
+            classificaAmici.sort(Comparator.comparing(Utente::getPunteggioTotale).reversed());
+        }
 
         sendResponseToClient(Storage.objectToJSON(classificaAmici));
     }

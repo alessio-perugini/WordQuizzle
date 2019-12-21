@@ -4,7 +4,6 @@ import errori.UserAlreadyExists;
 import errori.UserDoesntExists;
 import server.storage.Storage;
 
-import java.io.Serializable;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class UtentiConnessi {

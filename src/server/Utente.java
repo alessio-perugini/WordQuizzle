@@ -12,13 +12,11 @@ public class Utente implements Serializable {
         return nickname;
     }
 
-    private String nickname;
+    private String nickname, password;
 
     public String getPassword() {
         return password;
     }
-
-    private String password;
 
     public long getPunteggioTotale() {
         return punteggioTotale;
