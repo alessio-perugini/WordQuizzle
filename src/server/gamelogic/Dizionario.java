@@ -42,13 +42,18 @@ public class Dizionario {
         }
     }
 
-    public PriorityBlockingQueue<String> getNwordsFromDictionary(int n)
+    public ArrayList<HashMap<String, String>> getNwordsFromDictionary(int n)
     {
-        if(n > this.dizionario.size()) throw new IllegalArgumentException("Il dizionare ha meno parole di quelle richieste");
+        if(n > this.dizionario.size()) throw new IllegalArgumentException("Il dizionario ha meno parole di quelle richieste");
 
-        PriorityBlockingQueue<String> nParoleEstratte = new PriorityBlockingQueue<>();
+        ArrayList<HashMap<String, String>> nParoleEstratte = new ArrayList<>();
         Collections.shuffle(this.dizionario);
-        for (int i = 0; i < n; i++) nParoleEstratte.add(dizionario.get(i));
+
+        for (int i = 0; i < n; i++){
+            HashMap<String, String> ita_eng = new HashMap<>();
+            ita_eng.put(dizionario.get(i), null);
+            nParoleEstratte.add(ita_eng);
+        }
 
         return nParoleEstratte;
     }
