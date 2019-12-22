@@ -45,8 +45,8 @@ public class Sfida {
         if(userSfidante == null || userSfidato == null) throw new IllegalArgumentException();
 
         Random rand = new Random();
-        this.idSfida = rand.nextInt();
-        this.K_paroleDaInviare = rand.nextInt(20);
+        this.idSfida = userSfidante.hashCode() + rand.nextInt();
+        this.K_paroleDaInviare =  rand.nextInt(20);//TODO da sistemare
         this.paroleDaIndovinare = Dizionario.getInstance().getNwordsFromDictionary(K_paroleDaInviare);
         this.userSfidante = userSfidante;
         this.userSfidato = userSfidato;

@@ -14,6 +14,11 @@ public class Utente implements Serializable {
 
     private String nickname, password;
 
+    public int getUdpPort() {
+        return udpPort;
+    }
+
+    private int udpPort;
     public String getPassword() {
         return password;
     }

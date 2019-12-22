@@ -4,7 +4,7 @@ import errori.*;
 import server.storage.Storage;
 
 import java.io.*;
-import java.net.Socket;
+import java.net.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -148,12 +148,38 @@ public class Worker implements Runnable {
         sendResponseToClient(listaAmiciAsJson);
     }
 
-    public void sfida(String nickUtente, String nickAmico) {
+    public void sfida(String nickUtente, String nickAmico) throws IOException {
         if (nickUtente == null || nickUtente.length() == 0) throw new IllegalArgumentException("nickUtente arrato");
         if (nickAmico == null || nickAmico.length() == 0) throw new IllegalArgumentException("nickAmico arrato");
-        if (nickUtente.equals(nickAmico)) throw new IllegalArgumentException("Non puoi essere amico di te stesso");
+        if (nickUtente.equals(nickAmico)) throw new IllegalArgumentException("Non puoi sfidare te stesso");
+        Utente amico = UtentiConnessi.getInstance().getUser(nickAmico);
+        if (amico != null && !amico.isConnesso()) throw new FriendNotConnected("L'amico non è connesso");
+        //TODO gestire le IOEXC dei thread per lanciare un custom err
 
-        //TODO mandare richiesta UDP all'amico se accetta poi spawno gli oggetti Sfida
+        DatagramSocket udpClient = new DatagramSocket(Settings.UDP_PORT);
+        udpClient.setSoTimeout(20000);
+
+        InetAddress address = InetAddress.getByName(Settings.HOST_NAME);
+        String msg = "SFIDA " + nickUtente;
+        byte[] msgSfida = msg.getBytes(StandardCharsets.UTF_8);
+        DatagramPacket packet = new DatagramPacket(msgSfida, msgSfida.length, address, Settings.UDP_PORT);
+        udpClient.send(packet);
+
+        byte[] ack = new byte[4];
+        DatagramPacket rcvPck = new DatagramPacket(ack, ack.length);
+
+        try{
+            udpClient.receive(rcvPck);
+            msg = new String(rcvPck.getData());
+        }catch (SocketTimeoutException e){
+
+        }
+
+        udpClient.close();
+
+        if(msg.equals("no")) throw new SfidaRequestRefused("Ha rifiutato la sfida");
+
+        //TODO creare il codice della sfida
     }
 
     public void mostra_punteggio(String nickUtente) {

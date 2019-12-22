@@ -33,7 +33,7 @@ public class Converter {
 
     private static void instantiateMapper() {
         ObjectMapper mapper = new ObjectMapper();
-        reader = mapper.reader(MyMemoryResponse.class);
+        reader = mapper.reader().forType(MyMemoryResponse.class);
         writer = mapper.writerFor(MyMemoryResponse.class);
     }
 

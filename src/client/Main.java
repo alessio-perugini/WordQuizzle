@@ -10,6 +10,10 @@ import java.nio.charset.StandardCharsets;
 public class Main {
 
     public static void main(String[] args) {
+        UdpListener udpSrv = new UdpListener();
+        Thread thUdpListner = new Thread(udpSrv);
+        thUdpListner.start();
+
         try {
             SocketAddress address = new InetSocketAddress("127.0.0.1", 1500);
             SocketChannel client = SocketChannel.open(address);
@@ -30,6 +34,13 @@ public class Main {
         } catch (IOException ex) {
             ex.printStackTrace();
         }
+        //TODO gestire la chiusura del thudp
+        try{
+            thUdpListner.interrupt();
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        System.exit(0);
     }
 
     public static void scriviLeggi(String messaggio, SocketChannel client) {
