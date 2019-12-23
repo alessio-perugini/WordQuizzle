@@ -5,15 +5,14 @@ import server.MyMemoryAPI.MyMemoryResponse;
 import server.gamelogic.Sfida;
 
 import java.io.*;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.net.URLEncoder;
+import java.net.*;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
 public class Utils {
+    private static final int MAX_PORT_NUM = 65535;
     public static String getParamsString(Map<String, String> params) throws UnsupportedEncodingException {
         StringBuilder result = new StringBuilder();
 
@@ -75,5 +74,23 @@ public class Utils {
             Object[] keySet = (Object[])words.keySet().toArray();
             System.out.println((String)keySet[0] + " -> " + words.get(keySet[0]));
         }
+    }
+
+    public static boolean udpPortAvailable(int port) {
+        if (port < 49152 || port > 65535) throw new IllegalArgumentException("Invalid start port: " + port);
+
+        DatagramSocket ds = null;
+        try {
+            ds = new DatagramSocket(port);
+            ds.setReuseAddress(true);
+            return true;
+        } catch (IOException e) {
+        } finally {
+            if (ds != null) {
+                ds.close();
+            }
+        }
+
+        return false;
     }
 }

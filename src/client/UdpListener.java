@@ -8,8 +8,9 @@ import java.net.InetAddress;
 import java.nio.charset.StandardCharsets;
 
 public class UdpListener implements Runnable {
-    public UdpListener() {
-
+    int udpPort;
+    public UdpListener(int uPort) {
+        this.udpPort = uPort;
     }
 
     @Override
@@ -17,15 +18,15 @@ public class UdpListener implements Runnable {
         byte[] buffer = new byte[100];
 
         DatagramPacket rcvPacket = new DatagramPacket(buffer, buffer.length);
-
-        try(DatagramSocket server = new DatagramSocket(Settings.UDP_PORT)){
+        //TODO check udp port
+        try(DatagramSocket server = new DatagramSocket(udpPort, InetAddress.getByName(Settings.HOST_NAME))){
             System.out.println("Server up!");
 
             while(true){
                 server.receive(rcvPacket);
 
                 String msg = new String(rcvPacket.getData());
-                System.out.println("Server ti ha inviato una richiesta di sfida" + msg);
+                System.out.println(msg + " ti vuole sfidare accetti (si/no): ");
 
                 String risposta = "si"; //TODO parametrizzare
                 byte[] ackBuf = risposta.getBytes(StandardCharsets.UTF_8);

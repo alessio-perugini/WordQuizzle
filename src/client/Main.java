@@ -1,36 +1,97 @@
 package client;
 
+import server.Settings;
+import server.Utils;
+
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 import java.nio.charset.StandardCharsets;
+import java.util.NoSuchElementException;
+import java.util.StringTokenizer;
 
 public class Main {
 
     public static void main(String[] args) {
-        UdpListener udpSrv = new UdpListener();
+        int udpPort = (args.length > 0) ? Integer.parseInt(args[0]) : 50001;
+        try{
+            while(!Utils.udpPortAvailable(++udpPort));
+        }catch (Exception e){
+            e.printStackTrace();
+            System.exit(0);
+        }
+
+        UdpListener udpSrv = new UdpListener(udpPort);
         Thread thUdpListner = new Thread(udpSrv);
         thUdpListner.start();
 
+        BufferedReader consoleRdr = new BufferedReader(new InputStreamReader(System.in));
+
+
         try {
-            SocketAddress address = new InetSocketAddress("127.0.0.1", 1500);
+            SocketAddress address = new InetSocketAddress(InetAddress.getByName("localhost"), Settings.TCP_PORT);
             SocketChannel client = SocketChannel.open(address);
             ByteBuffer buffer = ByteBuffer.allocate(1024);
 
-            RmiClient rmiReg = new RmiClient();
-            System.out.println(rmiReg.registra_utente("asd", "dsadsadsa"));
-            System.out.println(rmiReg.registra_utente("boia", "dsaasdasd"));
-            scriviLeggi("LOGIN asd dsadsadsa\n", client);
-            scriviLeggi("ADD_FRIEND asd boia\n", client);
-            scriviLeggi("ADD_FRIEND asd xD\n", client);
-            scriviLeggi("LISTA_AMICI asd\n", client);
-            scriviLeggi("MOSTRA_SCORE asd\n", client);
-            scriviLeggi("MOSTRA_CLASSIFICA asd\n", client);
-            scriviLeggi("LOGOUT asd\n", client);
+            boolean quit = false;
+            String scelta = "";
 
-            client.close();
+            while(!quit){
+                scelta = consoleRdr.readLine().trim();
+                StringTokenizer tokenizedLine = new StringTokenizer(scelta);
+                try{
+                    switch (tokenizedLine.nextToken()){
+                        case "quit":
+                            client.close();
+                            break;
+                        case "registra_utente":
+                            RmiClient rmiReg = new RmiClient();
+                            String nickname = tokenizedLine.nextToken();
+                            String pw = tokenizedLine.nextToken();
+                            System.out.println((rmiReg.registra_utente(nickname, pw)) ? "Registrato": "Non registrato");
+                            break;
+                        case "login":
+                            String nick = tokenizedLine.nextToken();
+                            String password = tokenizedLine.nextToken();
+                            scriviLeggi("LOGIN "+nick+" "+password+" " + udpPort, client);
+                            break;
+                        case "logout":
+                            String nick2 = tokenizedLine.nextToken();
+                            scriviLeggi("LOGOUT " + nick2, client);
+                            break;
+                        case "aggiungi_amico":
+                            String u1 = tokenizedLine.nextToken();
+                            String u2 = tokenizedLine.nextToken();
+                            scriviLeggi("ADD_FRIEND "+u1+" "+u2+"", client);
+                            break;
+                        case "lista_amici":
+                            String user1 = tokenizedLine.nextToken();
+                            scriviLeggi("LISTA_AMICI " + user1, client);
+                            break;
+                        case "sfida":
+                            String us1 = tokenizedLine.nextToken();
+                            String us2 = tokenizedLine.nextToken();
+                            scriviLeggi("SFIDA "+us1+" "+us2+"", client);
+                            break;
+                        case "mostra_punteggio":
+                            String utente = tokenizedLine.nextToken();
+                            scriviLeggi("MOSTRA_SCORE " + utente, client);
+                            break;
+                        case "mostra_classifica":
+                            String utente1 = tokenizedLine.nextToken();
+                            scriviLeggi("MOSTRA_CLASSIFICA " + utente1, client);
+                            break;
+                    }
+                }catch (NoSuchElementException nse){
+                    System.out.println(nse.getMessage());
+                }
+
+            }
         } catch (IOException ex) {
             ex.printStackTrace();
         }

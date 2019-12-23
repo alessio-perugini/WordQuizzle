@@ -23,9 +23,9 @@ public class Registrazione extends RemoteServer implements RegistrazioneService 
         if(password == null || password.length() < 6) throw new InvalidPassword("Password non valida");
 
         Utente user = new Utente(nickName, password);
-
+        //TODO da cambiare che ritorna una string
         try{
-            return this.lsUtenti.addUtente(user) != null;
+            return this.lsUtenti.addUtente(user) == null;
         }catch (Exception ecc){
             ecc.printStackTrace();
             return false;

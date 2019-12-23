@@ -1,5 +1,6 @@
 package client;
 
+import server.Settings;
 import server.rmi.RegistrazioneService;
 
 import java.io.BufferedReader;
@@ -9,14 +10,12 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 
 public class RmiClient {
-    int port = 30000;
-
     public boolean registra_utente(String username, String pw){
         Remote remoteObject;
         RegistrazioneService serverObject;
 
         try{
-            Registry r = LocateRegistry.getRegistry(port);
+            Registry r = LocateRegistry.getRegistry(Settings.RMI_PORT);
             remoteObject = r.lookup("REGISTRAZIONE-SERVER");
             serverObject = (RegistrazioneService) remoteObject;
             return serverObject.registra_utente(username, pw);

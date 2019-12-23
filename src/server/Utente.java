@@ -1,5 +1,6 @@
 package server;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import errori.FriendAlreadyExists;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
@@ -7,17 +8,23 @@ import java.io.Serializable;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class Utente implements Serializable {
-    private static final long serialVersionUID = 1L;
+
     public String getNickname() {
         return nickname;
     }
 
     private String nickname, password;
 
+
     public int getUdpPort() {
         return udpPort;
     }
 
+    public void setUdpPort(int udpPort) {
+        this.udpPort = udpPort;
+    }
+
+    @JsonIgnore
     private int udpPort;
     public String getPassword() {
         return password;
@@ -30,6 +37,7 @@ public class Utente implements Serializable {
     private long punteggioTotale;
 
     public ConcurrentHashMap<String, String> getListaAmici() {
+        if(this.listaAmici == null) this.listaAmici = new ConcurrentHashMap<>();
         return listaAmici;
     }
 
@@ -46,7 +54,7 @@ public class Utente implements Serializable {
     private boolean connesso;
 
     public Utente(){
-
+        this.udpPort = Settings.UDP_PORT;
     }
 
     public Utente(String nick, String password){
@@ -60,6 +68,11 @@ public class Utente implements Serializable {
         if(listaAmici.get(amico) != null) throw new FriendAlreadyExists("Sei già amico");
 
         listaAmici.putIfAbsent(amico, amico);
+    }
+
+    public boolean isFriend(String amico){
+        if(amico == null || amico.equals("")) throw new IllegalArgumentException("Nome amico non valido");
+        return (listaAmici.get(amico) != null);
     }
 
 }
