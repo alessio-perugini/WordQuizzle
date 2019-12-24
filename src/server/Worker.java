@@ -11,22 +11,23 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class Worker implements Runnable {
 
-    private Socket client;
-    private BufferedOutputStream outToClient;
     private Utente socUser;
 
     public Worker(Socket c) {
-        this.client = c;
+        try{
+            BufferedReader inFromClient = new BufferedReader(new InputStreamReader(c.getInputStream()));
+            BufferedOutputStream outToClient = new BufferedOutputStream(c.getOutputStream());
+            socUser = new Utente(c, inFromClient, outToClient);
+        }catch (Exception e){
+            e.printStackTrace();
+        }
     }
 
     public void run() {
         try {
-            BufferedReader inFromClient = new BufferedReader(new InputStreamReader(client.getInputStream()));
-            outToClient = new BufferedOutputStream(client.getOutputStream());
-
             String message;
 
-            while ((message = inFromClient.readLine()) != null) {
+            while ((message = socUser.getInFromClient().readLine()) != null) {
                 StringTokenizer tokenizedLine = new StringTokenizer(message);
                 String pw, nickUtente, nickAmico;
                 try{
@@ -35,11 +36,12 @@ public class Worker implements Runnable {
                             nickUtente = tokenizedLine.nextToken();
                             pw = tokenizedLine.nextToken();
                             String udpPort = tokenizedLine.nextToken();
+                            this.socUser.setUdpPort(Integer.parseInt(udpPort));
 
                             try {
                                 login(nickUtente, pw);
-                                this.socUser.setUdpPort(Integer.parseInt(udpPort));
                             } catch (Exception e) {
+                                e.printStackTrace();
                                 sendResponseToClient(e.getMessage());
                             }
                             break;
@@ -101,9 +103,9 @@ public class Worker implements Runnable {
                 }
             }
 
-            client.close();
+            socUser.getClient().close();
             if(socUser != null) UtentiConnessi.getInstance().setConnected(socUser.getNickname(), false); //Se crasha lo disconnette
-            inFromClient.close();
+            socUser.getInFromClient().close();
             System.out.println("Client closed connection");
         } catch (IOException ecc) {
             ecc.printStackTrace();
@@ -120,8 +122,12 @@ public class Worker implements Runnable {
 
         if (profilo == null) throw new UserDoesntExists("L'utente inserito non esiste");
         if (!profilo.getPassword().equals(password)) throw new WrongPassword("Password errata");
-
+        //associo il socket all'utente loggato
         UtentiConnessi.getInstance().setConnected(nickUtente, true);
+        profilo.setClient(this.socUser.getClient());
+        profilo.setUdpPort(this.socUser.getUdpPort());
+        profilo.setInFromClient(this.socUser.getInFromClient());
+        profilo.setOutToClient(this.socUser.getOutToClient());
         this.socUser = profilo;
         sendResponseToClient("Login eseguito con successo");
     }
@@ -174,7 +180,7 @@ public class Worker implements Runnable {
         //TODO gestire le IOEXC dei thread per lanciare un custom err
 
         DatagramSocket udpClient = new DatagramSocket();
-        udpClient.setSoTimeout(20000);
+        udpClient.setSoTimeout(Settings.UDP_TIMEOUT);
 
         InetAddress address = InetAddress.getByName(Settings.HOST_NAME);
         String msg = nickUtente;
@@ -239,10 +245,11 @@ public class Worker implements Runnable {
 
     private void sendResponseToClient(String testo) {
         if (testo == null) throw new IllegalArgumentException();
+        if(socUser.getOutToClient() == null) throw new NullPointerException();
 
         try {
-            outToClient.write((testo + "\n").getBytes(StandardCharsets.UTF_8), 0, testo.length() + 1);
-            outToClient.flush();
+            socUser.getOutToClient().write((testo + "\n").getBytes(StandardCharsets.UTF_8), 0, testo.length() + 1);
+            socUser.getOutToClient().flush();
         } catch (IOError | IOException ecc) {
             ecc.printStackTrace();
         }

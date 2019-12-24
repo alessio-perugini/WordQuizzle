@@ -28,8 +28,6 @@ public class Storage {
                 ByteBuffer bb = ByteBuffer.wrap(content);
                 outWrapChannel.write(bb);
 
-                // Clear resources
-                System.out.println("close channels, clear resources");
                 bb.clear();
                 outWrapChannel.close();
             } catch (Exception e) {
