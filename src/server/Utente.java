@@ -9,12 +9,17 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class Utente implements Serializable {
 
+    @JsonIgnore
+    private int udpPort;
+    @JsonIgnore
+    private boolean connesso;
+    private long punteggioTotale;
+    private String nickname, password;
+    private ConcurrentHashMap<String, String> listaAmici;
+
     public String getNickname() {
         return nickname;
     }
-
-    private String nickname, password;
-
 
     public int getUdpPort() {
         return udpPort;
@@ -24,8 +29,6 @@ public class Utente implements Serializable {
         this.udpPort = udpPort;
     }
 
-    @JsonIgnore
-    private int udpPort;
     public String getPassword() {
         return password;
     }
@@ -34,14 +37,10 @@ public class Utente implements Serializable {
         return punteggioTotale;
     }
 
-    private long punteggioTotale;
-
     public ConcurrentHashMap<String, String> getListaAmici() {
         if(this.listaAmici == null) this.listaAmici = new ConcurrentHashMap<>();
         return listaAmici;
     }
-
-    private ConcurrentHashMap<String, String> listaAmici;
 
     public boolean isConnesso() {
         return connesso;
@@ -50,8 +49,6 @@ public class Utente implements Serializable {
     public void setConnesso(boolean connesso) {
         this.connesso = connesso;
     }
-
-    private boolean connesso;
 
     public Utente(){
         this.udpPort = Settings.UDP_PORT;

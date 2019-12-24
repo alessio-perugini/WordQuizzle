@@ -190,12 +190,16 @@ public class Worker implements Runnable {
             msg = new String(rcvPck.getData());
         }catch (SocketTimeoutException e){
             e.printStackTrace();
+            udpClient.close();
+            throw new NessunaRispostaDiSfida("L'amico non ha dato risposta.");
         }
 
         udpClient.close();
 
         if(msg.equals("no")) throw new SfidaRequestRefused("Ha rifiutato la sfida");
         sendResponseToClient(nickAmico + " ha accettato la sfida!");
+
+
         //TODO creare il codice della sfida
     }
 

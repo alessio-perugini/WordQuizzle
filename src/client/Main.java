@@ -30,7 +30,6 @@ public class Main {
         }
 
         BufferedReader consoleRdr = new BufferedReader(new InputStreamReader(System.in));
-
         UdpListener udpSrv = new UdpListener(udpPort, consoleRdr);
         Thread thUdpListner = new Thread(udpSrv);
         thUdpListner.start();
@@ -74,6 +73,14 @@ public class Main {
                             break;
                         case "mostra_classifica":
                             classifica(client);
+                            break;
+                        case "si":
+                            udpSrv.sfidaAnswered.set(true);
+                            udpSrv.setRispostaSfida("si");
+                            break;
+                        case "no":
+                            udpSrv.sfidaAnswered.set(true);
+                            udpSrv.setRispostaSfida("no");
                             break;
                         case "--help":
                             System.out.println("usage : COMMAND [ ARGS ...]\n" +

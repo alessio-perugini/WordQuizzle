@@ -34,9 +34,10 @@ public class Server {
     public void SalvaSuFileHandleSIGTERM(ExecutorService ex){
         Thread thread = new Thread(new Thread(() -> {
             try{
-                Thread.sleep(20);
+                Thread.sleep(20000);
+                System.out.println("/!\\ LOG: Salvataggio automatico in corso...");
                 Storage.writeObjectToJSONFile(Settings.JSON_FILENAME, UtentiConnessi.getInstance().getHashListaUtenti());
-                System.out.println("LOG: Salvataggio completato.");
+                System.out.println("/!\\ LOG: Salvataggio completato.");
             }catch (InterruptedException e){
                 e.printStackTrace();
             }
@@ -45,8 +46,11 @@ public class Server {
         thread.start();
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            System.out.println("Shutdown hook ran!");
+            System.out.println("/!\\ Shutdown hook ran! /!\\");
             ex.shutdownNow();
+            ex.shutdown();
+            while(!ex.isTerminated()){}
+
             try{
                 thread.join();
                 thread.interrupt();

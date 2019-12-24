@@ -79,7 +79,6 @@ public class Storage {
                     .forType(new TypeReference<ConcurrentHashMap<String, Utente>>() {
                     })
                     .readValue(buffer.array());
-
             return ls;
         } catch (IOException e) {
             e.printStackTrace();

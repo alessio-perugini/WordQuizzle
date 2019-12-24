@@ -14,6 +14,7 @@ public class Main {
     public static void main(String[] args){
         RegistrazioneServer regServer = new RegistrazioneServer();
         regServer.start();
+        UtentiConnessi.getInstance();//Creo l'istanza così carica subito i json in memoria
         Server objServer = new Server();
         objServer.start();
     }

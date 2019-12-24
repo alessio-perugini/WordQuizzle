@@ -1,1 +1,1 @@
-{"claudio":{"nickname":"claudio","password":"asd1asd","punteggioTotale":0,"listaAmici":{"alessio":"alessio"},"connesso":false},"alessio":{"nickname":"alessio","password":"asd1asd","punteggioTotale":0,"listaAmici":{"claudio":"claudio"},"connesso":false}}
+{"claudio":{"nickname":"claudio","password":"asd1asd","punteggioTotale":0,"listaAmici":{"alessio":"alessio"}},"alessio":{"nickname":"alessio","password":"asd1asd","punteggioTotale":0,"listaAmici":{"claudio":"claudio"}}}
