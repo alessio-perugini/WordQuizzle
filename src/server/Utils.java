@@ -7,9 +7,13 @@ import server.gamelogic.Sfida;
 import java.io.*;
 import java.net.*;
 import java.nio.charset.StandardCharsets;
+import java.sql.Time;
+import java.sql.Timestamp;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import static java.util.concurrent.TimeUnit.*;
 
 public class Utils {
     private static final int MAX_PORT_NUM = 65535;
@@ -92,5 +96,14 @@ public class Utils {
         }
 
         return false;
+    }
+
+    public static Timestamp addSecondsToATimeStamp(Timestamp start, int sec){
+        return new Timestamp(start.getTime() + (sec * 1000L));
+    }
+
+    public static boolean isGivenTimeExpired(Timestamp end){
+        Timestamp now = new Timestamp(System.currentTimeMillis());
+        return end.before(now);
     }
 }

@@ -2,7 +2,7 @@ package server.rmi;
 
 import errori.InvalidPassword;
 import errori.UserAlreadyExists;
-import server.UtentiConnessi;
+import server.ListaUtenti;
 import server.Utente;
 
 import java.rmi.RemoteException;
@@ -11,10 +11,10 @@ import java.rmi.server.RemoteServer;
 public class Registrazione extends RemoteServer implements RegistrazioneService {
     private static final long serialVersionUID = 1L;
 
-    private UtentiConnessi lsUtenti;
+    private ListaUtenti lsUtenti;
 
     public Registrazione(){
-        lsUtenti = UtentiConnessi.getInstance();
+        lsUtenti = ListaUtenti.getInstance();
     }
 
     @Override

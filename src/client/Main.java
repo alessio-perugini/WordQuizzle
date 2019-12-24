@@ -20,6 +20,8 @@ public class Main {
 
     static int udpPort = 50001;
     static Utente profiloLoggato = null;
+    static final BufferedReader consoleRdr = new BufferedReader(new InputStreamReader(System.in));
+
     public static void main(String[] args) {
         udpPort = (args.length > 0) ? Integer.parseInt(args[0]) : 50001;
         try {
@@ -29,7 +31,6 @@ public class Main {
             System.exit(0);
         }
 
-        BufferedReader consoleRdr = new BufferedReader(new InputStreamReader(System.in));
         UdpListener udpSrv = new UdpListener(udpPort, consoleRdr);
         Thread thUdpListner = new Thread(udpSrv);
         thUdpListner.start();
@@ -43,62 +44,66 @@ public class Main {
             String scelta = "";
 
             while (!quit) {
-                scelta = consoleRdr.readLine().trim();
-                StringTokenizer tokenizedLine = new StringTokenizer(scelta);
-                try {
-                    switch (tokenizedLine.nextToken()) {
-                        case "quit":
-                            client.close();
-                            break;
-                        case "registra_utente":
-                            registrazione(tokenizedLine, client);
-                            break;
-                        case "login":
-                            login(tokenizedLine, client);
-                            break;
-                        case "logout":
-                            logout(client);
-                            break;
-                        case "aggiungi_amico":
-                            aggiungiAmico(tokenizedLine, client);
-                            break;
-                        case "lista_amici":
-                            listaAmici(client);
-                            break;
-                        case "sfida":
-                            sfida(tokenizedLine, client);
-                            break;
-                        case "mostra_punteggio":
-                            punteggio(client);
-                            break;
-                        case "mostra_classifica":
-                            classifica(client);
-                            break;
-                        case "si":
-                            udpSrv.sfidaAnswered.set(true);
-                            udpSrv.setRispostaSfida("si");
-                            break;
-                        case "no":
-                            udpSrv.sfidaAnswered.set(true);
-                            udpSrv.setRispostaSfida("no");
-                            break;
-                        case "--help":
-                            System.out.println("usage : COMMAND [ ARGS ...]\n" +
-                                    "Commands: \n" +
-                                    "registra_utente <nickUtente > <password > registra l' utente \n" +
-                                    "login <nickUtente > <password > effettua il login logout effettua il logout \n" +
-                                    "aggiungi_amico <nickAmico> crea relazione di amicizia con nickAmico lista_amici mostra la lista dei propri amici \n" +
-                                    "sfida <nickAmico > richiesta di una sfida a nickAmico \n" +
-                                    "mostra_punteggio mostra il punteggio dell’utente \n" +
-                                    "mostra_classifica mostra una classifica degli amici dell’utente (incluso l’utente stesso)");
-                            break;
-                        default:
-                            System.out.println("Comando non trovato, per la lista di comanda digitare (--help)");
-                            break;
+                //synchronized (consoleRdr){
+                    scelta = consoleRdr.readLine().trim();
+                    StringTokenizer tokenizedLine = new StringTokenizer(scelta);
+                    try {
+                        switch (tokenizedLine.nextToken()) {
+                            case "quit":
+                                quit = true;
+                                client.close();
+                                break;
+                            case "registra_utente":
+                                registrazione(tokenizedLine, client);
+                                break;
+                            case "login":
+                                login(tokenizedLine, client);
+                                break;
+                            case "logout":
+                                logout(client);
+                                break;
+                            case "aggiungi_amico":
+                                aggiungiAmico(tokenizedLine, client);
+                                break;
+                            case "lista_amici":
+                                listaAmici(client);
+                                break;
+                            case "sfida":
+                                sfida(tokenizedLine, client);
+                                break;
+                            case "mostra_punteggio":
+                                punteggio(client);
+                                break;
+                            case "mostra_classifica":
+                                classifica(client);
+                                break;
+                            case "si":
+                                udpSrv.sfidaAnswered.set(true);
+                                udpSrv.setRispostaSfida("si");
+                                break;
+                            case "no":
+                                udpSrv.sfidaAnswered.set(true);
+                                udpSrv.setRispostaSfida("no");
+                                break;
+                            case "--help":
+                                System.out.println("usage : COMMAND [ ARGS ...]\n" +
+                                        "Commands: \n" +
+                                        "registra_utente <nickUtente > <password > registra l' utente \n" +
+                                        "login <nickUtente > <password > effettua il login logout effettua il logout \n" +
+                                        "aggiungi_amico <nickAmico> crea relazione di amicizia con nickAmico lista_amici mostra la lista dei propri amici \n" +
+                                        "sfida <nickAmico > richiesta di una sfida a nickAmico \n" +
+                                        "mostra_punteggio mostra il punteggio dell’utente \n" +
+                                        "mostra_classifica mostra una classifica degli amici dell’utente (incluso l’utente stesso)");
+                                break;
+                            default:
+                                System.out.println("Comando non trovato, per la lista di comanda digitare (--help)");
+                                break;
+                        }
+                    } catch (NoSuchElementException nse) {
+                        System.out.println(nse.getMessage());
                     }
-                } catch (NoSuchElementException nse) {
-                    System.out.println(nse.getMessage());
-                }
+               // }
+
 
             }
         } catch (IOException ex) {

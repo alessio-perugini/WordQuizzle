@@ -43,7 +43,7 @@ public class UdpListener implements Runnable {
                 String msg = new String(rcvPacket.getData());
                 System.out.println(msg + " ti vuole sfidare accetti (si/no): ");
 
-                while(!this.sfidaAnswered.get()); //Aspetto fino a che non mi da una risposta valida
+                while(!this.sfidaAnswered.get()); //Aspetto fino a che non mi da una risposta
 
                 String risposta = this.rispostaSfida;
                 if(this.sfidaAnswered.get() && (risposta.equals("si") || risposta.equals("no"))){

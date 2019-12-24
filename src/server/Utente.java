@@ -113,4 +113,8 @@ public class Utente implements Serializable {
         return (listaAmici.get(amico) != null);
     }
 
+    public void addPunteggioPartita(int punteggio){
+        this.punteggioTotale += punteggio;
+    }
+
 }

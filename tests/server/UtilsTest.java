@@ -3,7 +3,8 @@ package server;
 import org.junit.jupiter.api.Test;
 import server.gamelogic.Sfida;
 
-import java.net.Socket;
+import java.sql.Timestamp;
+import java.text.ParseException;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -39,5 +40,20 @@ class UtilsTest {
         //assertTrue(aperto);
         assertTrue(Utils.udpPortAvailable(50002));
 
+    }
+
+    @Test
+    void addSecondsToATimeStamp() throws ParseException {
+        Timestamp start = new Timestamp(System.currentTimeMillis());
+        Timestamp end = Utils.addSecondsToATimeStamp(start, 60);
+        assertEquals(Utils.addSecondsToATimeStamp(end, -60), start);
+    }
+
+    @Test
+    void isCurrentTimeExpired() {
+        Timestamp start = new Timestamp(System.currentTimeMillis());
+        Timestamp end = Utils.addSecondsToATimeStamp(start, 60);
+        assertFalse(Utils.isGivenTimeExpired(end));
+        assertTrue(Utils.isGivenTimeExpired(start));
     }
 }

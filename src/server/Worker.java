@@ -1,6 +1,9 @@
 package server;
 
 import errori.*;
+import server.gamelogic.ListaSfide;
+import server.gamelogic.Partita;
+import server.gamelogic.Sfida;
 import server.storage.Storage;
 
 import java.io.*;
@@ -104,7 +107,7 @@ public class Worker implements Runnable {
             }
 
             socUser.getClient().close();
-            if(socUser != null) UtentiConnessi.getInstance().setConnected(socUser.getNickname(), false); //Se crasha lo disconnette
+            if(socUser != null) ListaUtenti.getInstance().setConnected(socUser.getNickname(), false); //Se crasha lo disconnette
             socUser.getInFromClient().close();
             System.out.println("Client closed connection");
         } catch (IOException ecc) {
@@ -115,15 +118,15 @@ public class Worker implements Runnable {
     public void login(String nickUtente, String password) {
         if (nickUtente == null || nickUtente.length() == 0) throw new IllegalArgumentException();
         if (password == null || password.length() == 0) throw new IllegalArgumentException();
-        if (UtentiConnessi.getInstance().isConnected(nickUtente))
+        if (ListaUtenti.getInstance().isConnected(nickUtente))
             throw new UserAlreadyLoggedIn("L'utente è già loggato");
 
-        Utente profilo = UtentiConnessi.getInstance().getUser(nickUtente);
+        Utente profilo = ListaUtenti.getInstance().getUser(nickUtente);
 
         if (profilo == null) throw new UserDoesntExists("L'utente inserito non esiste");
         if (!profilo.getPassword().equals(password)) throw new WrongPassword("Password errata");
         //associo il socket all'utente loggato
-        UtentiConnessi.getInstance().setConnected(nickUtente, true);
+        ListaUtenti.getInstance().setConnected(nickUtente, true);
         profilo.setClient(this.socUser.getClient());
         profilo.setUdpPort(this.socUser.getUdpPort());
         profilo.setInFromClient(this.socUser.getInFromClient());
@@ -134,9 +137,9 @@ public class Worker implements Runnable {
 
     public void logout(String nickUtente) {
         if (nickUtente == null || nickUtente.length() == 0) throw new IllegalArgumentException();
-        if (!UtentiConnessi.getInstance().isConnected(nickUtente)) throw new UserAlreadyLoggedIn();
+        if (!ListaUtenti.getInstance().isConnected(nickUtente)) throw new UserAlreadyLoggedIn();
 
-        UtentiConnessi.getInstance().setConnected(nickUtente, false);
+        ListaUtenti.getInstance().setConnected(nickUtente, false);
         this.socUser = null;
         sendResponseToClient("Logout eseguito con successo");
     }
@@ -146,7 +149,7 @@ public class Worker implements Runnable {
         if (nickAmico == null || nickAmico.length() == 0) throw new IllegalArgumentException("nickAmico arrato");
         if (nickUtente.equals(nickAmico)) throw new IllegalArgumentException("Non puoi essere amico di te stesso");
 
-        UtentiConnessi connectedUSers = UtentiConnessi.getInstance();
+        ListaUtenti connectedUSers = ListaUtenti.getInstance();
         Utente profileRichiedente = connectedUSers.getUser(nickUtente);
         Utente profileAmico = connectedUSers.getUser(nickAmico);
 
@@ -161,7 +164,7 @@ public class Worker implements Runnable {
     public void lista_amici(String nickUtente) {
         if (nickUtente == null || nickUtente.length() == 0) throw new IllegalArgumentException("nickUtente arrato");
 
-        Utente profilo = UtentiConnessi.getInstance().getUser(nickUtente);
+        Utente profilo = ListaUtenti.getInstance().getUser(nickUtente);
         if (profilo == null) throw new UserDoesntExists("L'utente cercato non esiste");
 
         ConcurrentHashMap<String, String> listaAmici = profilo.getListaAmici();
@@ -173,9 +176,9 @@ public class Worker implements Runnable {
         if (nickUtente == null || nickUtente.length() == 0) throw new IllegalArgumentException("nickUtente arrato");
         if (nickAmico == null || nickAmico.length() == 0) throw new IllegalArgumentException("nickAmico arrato");
         if (nickUtente.equals(nickAmico)) throw new IllegalArgumentException("Non puoi sfidare te stesso");
-        Utente profiloUtente = UtentiConnessi.getInstance().getUser(nickUtente);
+        Utente profiloUtente = ListaUtenti.getInstance().getUser(nickUtente);
         if(!profiloUtente.isFriend(nickAmico)) throw new FriendNotFound("L'utente che vuoi sfidare non è nella tua lista amici");
-        Utente amico = UtentiConnessi.getInstance().getUser(nickAmico);
+        Utente amico = ListaUtenti.getInstance().getUser(nickAmico);
         if (amico != null && !amico.isConnesso()) throw new FriendNotConnected("L'amico non è connesso");
         //TODO gestire le IOEXC dei thread per lanciare un custom err
 
@@ -204,7 +207,18 @@ public class Worker implements Runnable {
 
         if(msg.equals("no")) throw new SfidaRequestRefused("Ha rifiutato la sfida");
         sendResponseToClient(nickAmico + " ha accettato la sfida!");
+        System.out.println("Sfida accettata");
 
+        Sfida objSfida = new Sfida(profiloUtente, amico);
+        ListaSfide sfide = ListaSfide.getInstance();
+        sfide.addSfida(objSfida);
+
+        Partita p1 = new Partita(profiloUtente, objSfida);
+        Partita p2 = new Partita(amico, objSfida);
+        Thread thPartita1 = new Thread(p1);//TODO vedere se creare un thread che fa pooling sulla struttura dati
+        Thread thPartita2 = new Thread(p2);
+        thPartita1.start();
+        thPartita2.start();
 
         //TODO creare il codice della sfida
     }
@@ -212,7 +226,7 @@ public class Worker implements Runnable {
     public void mostra_punteggio(String nickUtente) {
         if (nickUtente == null || nickUtente.length() == 0) throw new IllegalArgumentException("nickUtente arrato");
 
-        Utente profilo = UtentiConnessi.getInstance().getUser(nickUtente);
+        Utente profilo = ListaUtenti.getInstance().getUser(nickUtente);
         if (profilo == null) throw new UserDoesntExists("L'utente cercato non esiste");
 
         sendResponseToClient("Punteggio: " + profilo.getPunteggioTotale());
@@ -221,21 +235,20 @@ public class Worker implements Runnable {
     public void mostra_classifica(String nickUtente) {
         if (nickUtente == null || nickUtente.length() == 0) throw new IllegalArgumentException("nickUtente errato");
 
-        Utente profilo = UtentiConnessi.getInstance().getUser(nickUtente);
+        Utente profilo = ListaUtenti.getInstance().getUser(nickUtente);
         if (profilo == null) throw new UserDoesntExists("L'utente cercato non esiste");
 
         ArrayList<Utente> classificaAmici = new ArrayList<>();
         classificaAmici.add(profilo);
 
         if(!profilo.getListaAmici().isEmpty()) { //se non ha amici ritorna solo il suo score saltando questo if
-            for (Iterator<String> i = profilo.getListaAmici().values().iterator(); i.hasNext();) {
-                String keyAmico = i.next();
-                Utente amico = UtentiConnessi.getInstance().getUser(keyAmico);
+            for (String keyAmico : profilo.getListaAmici().values()) {
+                Utente amico = ListaUtenti.getInstance().getUser(keyAmico);
                 classificaAmici.add(amico);
             }
             classificaAmici.sort(Comparator.comparing(Utente::getPunteggioTotale).reversed());
         }
-        //Server per levare tutte le inf dell'utente
+        //Serve per levare tutte le info extra dell'utente
         ArrayList<String> leaderBoardWithOnlyUserANdScore = new ArrayList<>();
         for(Utente user : classificaAmici){
             leaderBoardWithOnlyUserANdScore.add(user.getNickname() + " " + user.getPunteggioTotale());

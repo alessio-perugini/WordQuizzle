@@ -6,9 +6,9 @@ import server.storage.Storage;
 
 import java.util.concurrent.ConcurrentHashMap;
 
-public class UtentiConnessi {
+public class ListaUtenti {
 
-    private static UtentiConnessi instance;
+    private static ListaUtenti instance;
 
     public ConcurrentHashMap<String, Utente> getHashListaUtenti() {
         return hashListaUtenti;
@@ -16,12 +16,12 @@ public class UtentiConnessi {
 
     private ConcurrentHashMap<String, Utente>  hashListaUtenti;
 
-    private UtentiConnessi(){
+    private ListaUtenti(){
         hashListaUtenti = (ConcurrentHashMap<String, Utente>)Storage.getObjectFromJSONFile(Settings.JSON_FILENAME);
     }
 
-    public static synchronized UtentiConnessi getInstance(){
-        if(instance == null) instance = new UtentiConnessi();
+    public static synchronized ListaUtenti getInstance(){
+        if(instance == null) instance = new ListaUtenti();
         return instance;
     }
 

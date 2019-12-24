@@ -36,13 +36,13 @@ public class Server {
             try{
                 Thread.sleep(20000);
                 System.out.println("/!\\ LOG: Salvataggio automatico in corso...");
-                Storage.writeObjectToJSONFile(Settings.JSON_FILENAME, UtentiConnessi.getInstance().getHashListaUtenti());
+                Storage.writeObjectToJSONFile(Settings.JSON_FILENAME, ListaUtenti.getInstance().getHashListaUtenti());
                 System.out.println("/!\\ LOG: Salvataggio completato.");
             }catch (InterruptedException e){
                 e.printStackTrace();
             }
         }));
-
+        thread.setDaemon(true);
         thread.start();
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
@@ -57,7 +57,7 @@ public class Server {
             }catch (InterruptedException ecc){
                 System.out.println("Interrupt ricevuto " + ecc.getMessage());
             }
-            Storage.writeObjectToJSONFile(Settings.JSON_FILENAME, UtentiConnessi.getInstance().getHashListaUtenti());
+            Storage.writeObjectToJSONFile(Settings.JSON_FILENAME, ListaUtenti.getInstance().getHashListaUtenti());
             System.out.println("LOG: Salvataggio completato.");
         }));
     }
