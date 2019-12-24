@@ -145,8 +145,9 @@ public class Worker implements Runnable {
         Utente profileAmico = connectedUSers.getUser(nickAmico);
 
         if (profileRichiedente == null || profileAmico == null) throw new FriendNotFound("Amico non trovato");
-
+        if(!profileAmico.isConnesso()) throw new FriendNotConnected("L'amico deve essere connesso"); //TODO vedere
         profileRichiedente.addFriend(profileAmico.getNickname());
+        profileAmico.addFriend(profileRichiedente.getNickname());
 
         sendResponseToClient("Amicizia " + nickUtente + "-" + nickAmico + " creata");
     }

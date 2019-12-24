@@ -3,10 +3,15 @@
     <output-path>$PROJECT_DIR$/out/artifacts/WordQuizzle_jar</output-path>
     <root id="archive" name="WordQuizzle.jar">
       <element id="module-output" name="WordQuizzle" />
-      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/jetbrains/annotations/17.0.0/annotations-17.0.0.jar" path-in-jar="/" />
-      <element id="extracted-dir" path="$PROJECT_DIR$/jackson-databind-2.10.1.jar" path-in-jar="/" />
-      <element id="extracted-dir" path="$PROJECT_DIR$/jackson-core-2.10.1.jar" path-in-jar="/" />
-      <element id="extracted-dir" path="$PROJECT_DIR$/jackson-annotations-2.10.1.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/lib/jackson-annotations-2.10.1.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/opentest4j/opentest4j/1.2.0/opentest4j-1.2.0.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/lib/jackson-databind-2.10.1.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/lib/jackson-core-2.10.1.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-commons/1.1.1/junit-platform-commons-1.1.1.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/apiguardian/apiguardian-api/1.0.0/apiguardian-api-1.0.0.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/junit/jupiter/junit-jupiter-api/5.0.2/junit-jupiter-api-5.0.2.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/opentest4j/opentest4j/1.0.0/opentest4j-1.0.0.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-commons/1.0.2/junit-platform-commons-1.0.2.jar" path-in-jar="/" />
     </root>
   </artifact>
 </component>

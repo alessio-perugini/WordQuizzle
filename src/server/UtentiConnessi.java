@@ -17,7 +17,7 @@ public class UtentiConnessi {
     private ConcurrentHashMap<String, Utente>  hashListaUtenti;
 
     private UtentiConnessi(){
-        hashListaUtenti = (ConcurrentHashMap<String, Utente>)Storage.getObjectFromJSONFile("utenti.json");
+        hashListaUtenti = (ConcurrentHashMap<String, Utente>)Storage.getObjectFromJSONFile(Settings.JSON_FILENAME);
     }
 
     public static synchronized UtentiConnessi getInstance(){

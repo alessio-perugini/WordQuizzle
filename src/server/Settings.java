@@ -10,4 +10,6 @@ public class Settings {
     public static final String HOST_NAME = "localhost";
     public static final int MINUTI_PARTITA = 1;
     public static final String API_URL = "https://api.mymemory.translated.net/";
+    public static final String JSON_FILENAME = "utenti.json";
+
 }

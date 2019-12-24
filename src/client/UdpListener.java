@@ -2,15 +2,18 @@ package client;
 
 import server.Settings;
 
+import java.io.BufferedReader;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.nio.charset.StandardCharsets;
 
 public class UdpListener implements Runnable {
-    int udpPort;
-    public UdpListener(int uPort) {
+    private int udpPort;
+    private BufferedReader consoleRdr;
+    public UdpListener(int uPort, BufferedReader consoleRdr) {
         this.udpPort = uPort;
+        this.consoleRdr = consoleRdr;
     }
 
     @Override
@@ -28,7 +31,12 @@ public class UdpListener implements Runnable {
                 String msg = new String(rcvPacket.getData());
                 System.out.println(msg + " ti vuole sfidare accetti (si/no): ");
 
-                String risposta = "si"; //TODO parametrizzare
+                String risposta = "";
+
+                while(!risposta.equals("si") && !risposta.equals("no")){
+                    risposta =consoleRdr.readLine().trim();
+                }
+
                 byte[] ackBuf = risposta.getBytes(StandardCharsets.UTF_8);
                 DatagramPacket ack = new DatagramPacket(ackBuf, ackBuf.length, InetAddress.getByName(Settings.HOST_NAME), rcvPacket.getPort());
                 server.send(ack);

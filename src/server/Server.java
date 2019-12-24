@@ -35,7 +35,7 @@ public class Server {
         Thread thread = new Thread(new Thread(() -> {
             try{
                 Thread.sleep(20);
-                Storage.writeObjectToJSONFile("utenti.json", UtentiConnessi.getInstance().getHashListaUtenti());
+                Storage.writeObjectToJSONFile(Settings.JSON_FILENAME, UtentiConnessi.getInstance().getHashListaUtenti());
                 System.out.println("LOG: Salvataggio completato.");
             }catch (InterruptedException e){
                 e.printStackTrace();
@@ -53,7 +53,7 @@ public class Server {
             }catch (InterruptedException ecc){
                 System.out.println("Interrupt ricevuto " + ecc.getMessage());
             }
-            Storage.writeObjectToJSONFile("utenti.json", UtentiConnessi.getInstance().getHashListaUtenti());
+            Storage.writeObjectToJSONFile(Settings.JSON_FILENAME, UtentiConnessi.getInstance().getHashListaUtenti());
             System.out.println("LOG: Salvataggio completato.");
         }));
     }

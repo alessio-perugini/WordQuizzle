@@ -1,1 +1,1 @@
-{"asd":{"nickname":"asd","password":"dsadsadsa","punteggioTotale":50,"listaAmici":{"boia":"boia"},"connesso":false},"boia":{"nickname":"boia","password":"dsaasdasd","punteggioTotale":0,"listaAmici":{},"connesso":false},"alessio":{"nickname":"alessio","password":"asd1asd","punteggioTotale":0,"listaAmici":{},"connesso":true}}
+{"claudio":{"nickname":"claudio","password":"asd1asd","punteggioTotale":0,"listaAmici":{"alessio":"alessio"},"connesso":false},"alessio":{"nickname":"alessio","password":"asd1asd","punteggioTotale":0,"listaAmici":{"claudio":"claudio"},"connesso":false}}
