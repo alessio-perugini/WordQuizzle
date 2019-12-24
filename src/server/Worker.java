@@ -100,6 +100,8 @@ public class Worker implements Runnable {
                                 sendResponseToClient(e.getMessage());
                             }
                             break;
+                        default:
+                            break;
                     }
                 }catch (NoSuchElementException nse){
                     nse.printStackTrace();
@@ -107,8 +109,9 @@ public class Worker implements Runnable {
             }
 
             socUser.getClient().close();
-            if(socUser != null) ListaUtenti.getInstance().setConnected(socUser.getNickname(), false); //Se crasha lo disconnette
             socUser.getInFromClient().close();
+            if(socUser != null && socUser.getNickname() != null) ListaUtenti.getInstance().setConnected(socUser.getNickname(), false); //Se crasha lo disconnette
+
             System.out.println("Client closed connection");
         } catch (IOException ecc) {
             ecc.printStackTrace();
@@ -140,8 +143,8 @@ public class Worker implements Runnable {
         if (!ListaUtenti.getInstance().isConnected(nickUtente)) throw new UserAlreadyLoggedIn();
 
         ListaUtenti.getInstance().setConnected(nickUtente, false);
-        this.socUser = null;
         sendResponseToClient("Logout eseguito con successo");
+        this.socUser = new Utente(this.socUser.getClient(), this.socUser.getInFromClient(), this.socUser.getOutToClient());
     }
 
     public void aggiungi_amico(String nickUtente, String nickAmico) {

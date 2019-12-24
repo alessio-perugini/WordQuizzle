@@ -95,8 +95,16 @@ public class Main {
                                         "mostra_punteggio mostra il punteggio dell’utente \n" +
                                         "mostra_classifica mostra una classifica degli amici dell’utente (incluso l’utente stesso)");
                                 break;
+                            case "--read": //TODO remove
+                                read(client);
+                                break;
                             default:
-                                System.out.println("Comando non trovato, per la lista di comanda digitare (--help)");
+                                try{
+                                    write(scelta, client);
+                                }catch (Exception e){
+                                    e.printStackTrace();
+                                }
+                                //System.out.println("Comando non trovato, per la lista di comanda digitare (--help)");
                                 break;
                         }
                     } catch (NoSuchElementException nse) {
@@ -221,6 +229,38 @@ public class Main {
         }
     }
 
+    static void write(String messaggio, SocketChannel client){
+        try{
+            ByteBuffer buffer = ByteBuffer.allocate(1024);
+            messaggio += "\n";
+            byte[] mex = messaggio.getBytes(StandardCharsets.UTF_8);
+            buffer.put(mex);
+            buffer.flip();//Serve per far leggere dall'inizio al server
+            client.write(buffer);
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+    }
+
+    static void read(SocketChannel client){
+        Thread thReader = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                ByteBuffer buffer = ByteBuffer.allocate(1024);
+                buffer.clear();
+                try {
+                    client.read(buffer);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                String response = new String(buffer.array()).trim();
+                System.out.println("response=" + response);
+                buffer.clear();
+            }
+        });
+        thReader.setDaemon(true);
+        thReader.start();
+    }
     public static String scriviLeggi(String messaggio, SocketChannel client) {
         try {
             ByteBuffer buffer = ByteBuffer.allocate(1024);
