@@ -76,12 +76,13 @@ public class Server {
     public void keyAcceptableRegister(Selector selector, SelectionKey slectionKey) throws IOException {
         SocketChannel client = serverSckChnl.accept();
         client.configureBlocking(false);
+        SelectionKey sk = client.register(selector, SelectionKey.OP_READ);
         ByteBuffer length = ByteBuffer.allocate(Integer.BYTES);
         ByteBuffer msg = ByteBuffer.allocate(1024);
         ByteBuffer[] bfs = {length, msg};
-        socUser = new Utente(slectionKey);
+        socUser = new Utente(sk);
         Object[] objClient = {bfs, socUser};
-        client.register(selector, SelectionKey.OP_READ, objClient);
+        sk.attach(objClient);
     }
 
     public void keyWrite(SelectionKey key) throws IOException {
@@ -125,7 +126,6 @@ public class Server {
 
         if(byteLeft == -1) throw new IOException();
         this.socUser = (Utente) objClient[1];
-
         if (!message.toString().isEmpty()) messageParser(message.toString());
     }
 
@@ -306,9 +306,6 @@ public class Server {
         Sfida objSfida = new Sfida(profiloUtente, amico);
         ListaSfide sfide = ListaSfide.getInstance();
         sfide.addSfida(objSfida);
-
-        profiloUtente.getSelKey().interestOps(0); //Setto a 0 per non fare danni con il selector e i thpool
-        amico.getSelKey().interestOps(0);
 
         Partita p1 = new Partita(profiloUtente, objSfida);
         Partita p2 = new Partita(amico, objSfida);

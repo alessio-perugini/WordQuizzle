@@ -69,7 +69,8 @@ public class Partita implements Runnable {
                     this.sbagliate++;
                 }
                 i++;
-                parolaDaTradurre = ((String)paroleDaIndovinare.get(i).keySet().toArray()[0]);
+                String[] wordToguess = (String[])paroleDaIndovinare.get(i).keySet().toArray();
+                parolaDaTradurre = (wordToguess.length > 0) ? wordToguess[0]: "FINITO";
                 sendChallenge = String.format("Challenge %d/%d: %s", i + 1, this.paroleTotali, parolaDaTradurre);
                 sendResponseToClient(sendChallenge);
             }
