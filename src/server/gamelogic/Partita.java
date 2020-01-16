@@ -6,6 +6,10 @@ import server.Utente;
 import server.Utils;
 
 import java.io.*;
+import java.net.Socket;
+import java.nio.ByteBuffer;
+import java.nio.channels.SelectionKey;
+import java.nio.channels.SocketChannel;
 import java.nio.charset.StandardCharsets;
 import java.sql.Array;
 import java.sql.Timestamp;
@@ -17,8 +21,7 @@ public class Partita implements Runnable {
     private Timestamp inizioPartita, finePartita;
     private ArrayList<HashMap<String,String>> paroleDaIndovinare;
     private int paroleTotali, sbagliate, corrette, nonRisposte;
-    private BufferedReader inFromClient;
-    private BufferedOutputStream outToClient;
+    SocketChannel client;
 
     public Partita(Utente user, Sfida sfida) throws IOException {
         this.user = user;
@@ -30,8 +33,7 @@ public class Partita implements Runnable {
         this.nonRisposte = 0;
         this.inizioPartita = new Timestamp(System.currentTimeMillis());
         this.finePartita = Utils.addSecondsToATimeStamp(this.inizioPartita, Settings.DURATA_PARTITA_SEC);
-        inFromClient = new BufferedReader(new InputStreamReader(user.getSocChannel().socket().getInputStream()));
-        outToClient = new BufferedOutputStream(user.getSocChannel().socket().getOutputStream());
+        this.client = (SocketChannel)user.getSelKey().channel();
     }
 
     private void createDeepCopyOfWordsToGuess(ArrayList<HashMap<String,String>> wordToGuess){
@@ -46,9 +48,20 @@ public class Partita implements Runnable {
             String sendChallenge = String.format("Challenge %d/%d: %s", i + 1, this.paroleTotali, parolaDaTradurre);
             sendResponseToClient(sendChallenge);
 
-            String parolaTradotta;
+            ByteBuffer msg = ByteBuffer.allocate(1024);
+            long byteLeftToRead = client.read(msg);
+            if (byteLeftToRead == -1) throw  new IOException();
+            String parolaTradotta = new String(msg.array());
+            boolean firstTime = true;
 
-            while (!Utils.isGivenTimeExpired(this.finePartita) && (parolaTradotta = inFromClient.readLine()) != null) {
+            while (!Utils.isGivenTimeExpired(this.finePartita)/* && (parolaTradotta = inFromClient.readLine()) != null*/) {
+                if(!firstTime){
+                    byteLeftToRead = client.read(msg);
+                    if (byteLeftToRead == -1) throw  new IOException();
+                    parolaTradotta = new String(msg.array());
+                }else{
+                    firstTime = false;
+                }
 
                 if(parolaTradotta.equals(paroleDaIndovinare.get(i).get(parolaDaTradurre))){
                     this.corrette += 2;
@@ -60,6 +73,7 @@ public class Partita implements Runnable {
                 sendChallenge = String.format("Challenge %d/%d: %s", i + 1, this.paroleTotali, parolaDaTradurre);
                 sendResponseToClient(sendChallenge);
             }
+
             this.nonRisposte = this.paroleTotali - i;
             int punteggioPartita = this.corrette - this.sbagliate;
             user.addPunteggioPartita(punteggioPartita);
@@ -72,11 +86,10 @@ public class Partita implements Runnable {
 
     private void sendResponseToClient(String testo) {
         if (testo == null) throw new IllegalArgumentException();
-        if (outToClient == null) throw new NullPointerException();
+        if (client == null) throw new NullPointerException();
 
         try {
-            outToClient.write((testo + "\n").getBytes(StandardCharsets.UTF_8), 0, testo.length() + 1);
-            outToClient.flush();
+            client.write(ByteBuffer.wrap((testo + "\n").getBytes(StandardCharsets.UTF_8)));
         } catch (IOError | IOException ecc) {
             ecc.printStackTrace();
         }

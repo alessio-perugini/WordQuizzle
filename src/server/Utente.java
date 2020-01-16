@@ -9,6 +9,7 @@ import java.io.BufferedReader;
 import java.io.Serializable;
 import java.net.Socket;
 import java.nio.ByteBuffer;
+import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -24,24 +25,16 @@ public class Utente implements Serializable {
     /*@JsonIgnore
     private Socket client;*/
 
-    public ByteBuffer getReadBuf() {
-        if(readBuf == null) readBuf = ByteBuffer.allocate(1024);
-        return readBuf;
+    public SelectionKey getSelKey() {
+        return selKey;
+    }
+
+    public void setSelKey(SelectionKey selKey) {
+        this.selKey = selKey;
     }
 
     @JsonIgnore
-    private ByteBuffer readBuf;
-
-    public SocketChannel getSocChannel() {
-        return socChannel;
-    }
-
-    public void setSocChannel(SocketChannel socChannel) {
-        this.socChannel = socChannel;
-    }
-
-    @JsonIgnore
-    private SocketChannel socChannel;
+    private SelectionKey selKey;
     /*
     public void setClient(Socket client) {
         this.client = client;
@@ -89,9 +82,9 @@ public class Utente implements Serializable {
         this.connesso = false;
     }
 
-    public Utente(SocketChannel sckChnl){
+    public Utente(SelectionKey selectionKey){
         this.udpPort = Settings.UDP_PORT;
-        this.socChannel = sckChnl;
+        this.selKey = selectionKey;
     }
 
     public Utente(String nick, String password){

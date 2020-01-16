@@ -113,8 +113,11 @@ public class Main {
                                 if(reqSfida.getSfidaAnswered().get()){
                                     if(currToken.equals("si")){
                                         udpSrv.setRispostaSfida("si");
+                                        read(client);
+                                        sonoInPartita = true;
                                     }else if (currToken.equals("no")){
                                         udpSrv.setRispostaSfida("no");
+                                        sonoInPartita = false;
                                     }else {
 
                                     }
@@ -259,24 +262,12 @@ public class Main {
         }
     }
 
-    static void read(SocketChannel client) {
-        Thread thReader = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                ByteBuffer buffer = ByteBuffer.allocate(1024);
-                buffer.clear();
-                try {
-                    client.read(buffer);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                String response = new String(buffer.array()).trim();
-                System.out.println("response=" + response);
-                buffer.clear();
-            }
-        });
-        thReader.setDaemon(true);
-        thReader.start();
+    static void read(SocketChannel client) throws IOException {
+        ByteBuffer buffer = ByteBuffer.allocate(1024);
+        client.read(buffer);
+        String response = new String(buffer.array()).trim();
+        System.out.println("response: " + response);
+        buffer.clear();
     }
 
     public static String scriviLeggi(String messaggio, SocketChannel client) {
@@ -287,16 +278,7 @@ public class Main {
             length.flip();
             client.write(length);
             length.clear();
-
-
             client.write(ByteBuffer.wrap(messaggio.getBytes(StandardCharsets.UTF_8)));
-
-            /*
-            byte[] mex = messaggio.getBytes(StandardCharsets.UTF_8);
-            buffer.put(mex);
-            buffer.flip();//Serve per far leggere dall'inizio al server
-            client.write(buffer);
-*/
 
             ByteBuffer buffer = ByteBuffer.allocate(1024);
             client.read(buffer);

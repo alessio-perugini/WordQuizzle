@@ -10,10 +10,7 @@ import javax.sound.sampled.AudioFormat;
 import java.io.*;
 import java.net.*;
 import java.nio.ByteBuffer;
-import java.nio.channels.SelectionKey;
-import java.nio.channels.Selector;
-import java.nio.channels.ServerSocketChannel;
-import java.nio.channels.SocketChannel;
+import java.nio.channels.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -24,17 +21,22 @@ public class Server {
     private Utente socUser;
     ExecutorService ex;
     Selector selector;
-    public void start() throws IOException { //TODO gestire eccezione
-        ex = Executors.newFixedThreadPool(Settings.N_THREADS_THREAD_POOL);
-        ServerSocketChannel serverChannel = ServerSocketChannel.open();
-        serverChannel.socket().bind(new InetSocketAddress(InetAddress.getByName("localhost"), Settings.TCP_PORT));
-        serverChannel.configureBlocking(false);
+    SocketChannel socChanClient;
+    ServerSocketChannel serverSckChnl;
 
-        selector = Selector.open();
-        serverChannel.register(selector, SelectionKey.OP_ACCEPT);
-        try{
+    public void start() { //TODO gestire eccezione
+        try {
+            ex = Executors.newFixedThreadPool(Settings.N_THREADS_THREAD_POOL);
+            serverSckChnl = ServerSocketChannel.open();
+            serverSckChnl.socket().bind(new InetSocketAddress(InetAddress.getByName("localhost"), Settings.TCP_PORT));
+            serverSckChnl.configureBlocking(false);
+
+            int ops = serverSckChnl.validOps();
+            selector = Selector.open();
+            serverSckChnl.register(selector, ops, null);
+
             while (true) {
-                selector.selectNow();
+                selector.select();
 
                 Set<SelectionKey> readyKeys = selector.selectedKeys();
                 Iterator<SelectionKey> iterator = readyKeys.iterator();
@@ -45,57 +47,51 @@ public class Server {
                     // rimuove la chiave dal Selected Set, ma non dal registered Set
                     try {
                         if (key.isAcceptable()) {
-                            keyAcceptableRegister(selector, serverChannel);
+                            keyAcceptableRegister(selector, key);
                         } else if (key.isReadable()) {
                             keyRead(key);
-                        }else if(key.isWritable()){
+                        } else if (key.isWritable()) {
                             keyWrite(key);
                         }
                     } catch (IOException ex2) {
-                        key.cancel();
                         ex2.printStackTrace();
-                        try {
-                            key.channel().close();
-                            crashClient();
-                        } catch (IOException cex) {
-                            cex.printStackTrace();
-                        }
+                        key.channel().close();
+                        key.cancel();
+                        crashClient();
                     }
                 }
             }
-        }catch (IOException ioe){
+        } catch (IOException ioe) {
             ioe.printStackTrace();
         }
-
     }
 
-    public void crashClient(){
-        if(socUser != null && socUser.getNickname() != null) ListaUtenti.getInstance().setConnected(socUser.getNickname(), false); //Se crasha lo disconnette
-
+    public void crashClient() {
+        if (socUser != null && socUser.getNickname() != null)
+            ListaUtenti.getInstance().setConnected(socUser.getNickname(), false); //Se crasha lo disconnette
+        socUser = null; //TODO vedere se è problematico
         System.out.println("Client closed connection");
     }
 
-    public void keyAcceptableRegister(Selector selector, ServerSocketChannel srvSoc) throws IOException {
-        SocketChannel client = srvSoc.accept();
+    public void keyAcceptableRegister(Selector selector, SelectionKey slectionKey) throws IOException {
+        SocketChannel client = serverSckChnl.accept();
         client.configureBlocking(false);
         ByteBuffer length = ByteBuffer.allocate(Integer.BYTES);
         ByteBuffer msg = ByteBuffer.allocate(1024);
         ByteBuffer[] bfs = {length, msg};
-        socUser = new Utente(client);
+        socUser = new Utente(slectionKey);
         Object[] objClient = {bfs, socUser};
         client.register(selector, SelectionKey.OP_READ, objClient);
     }
 
-    SocketChannel socChanClient;
-
     public void keyWrite(SelectionKey key) throws IOException {
         socChanClient = (SocketChannel) key.channel();
-        Object[] respObj = (Object[])key.attachment();
-        String response = (String)respObj[0];
+        Object[] respObj = (Object[]) key.attachment();
+        String response = (String) respObj[0];
         ByteBuffer respBuf = ByteBuffer.wrap(response.getBytes(StandardCharsets.UTF_8));
         socChanClient.write(respBuf);
 
-        if(!respBuf.hasRemaining()){
+        if (!respBuf.hasRemaining()) {
             respBuf.clear();
             ByteBuffer length = ByteBuffer.allocate(Integer.BYTES);
             ByteBuffer msg = ByteBuffer.allocate(1024);
@@ -107,30 +103,36 @@ public class Server {
 
     public void keyRead(SelectionKey key) throws IOException {
         socChanClient = (SocketChannel) key.channel();
-        Object[] objClient = (Object[])key.attachment();
-        ByteBuffer[] bfs = (ByteBuffer[])objClient[0];
-        socChanClient.read(bfs);
-        this.socUser = (Utente)objClient[1];
+        Object[] objClient = (Object[]) key.attachment();
+        ByteBuffer[] bfs = (ByteBuffer[]) objClient[0];
+        long byteLeft = socChanClient.read(bfs);
 
-        if(!bfs[0].hasRemaining()){
-            bfs[0].flip();
-            int l = bfs[0].getInt();
+        byte[] bytes;
+        ByteBuffer msgBuf = bfs[1];
+        bfs[0].flip();
+        int l = bfs[0].getInt();
 
-            if(bfs[1].position() == l){
-                bfs[1].flip();
-                String msg = new String(bfs[1].array()).trim();
+        StringBuilder message = new StringBuilder();
 
-                if(!msg.isEmpty()) messageParser(msg);
-
-                //TODO gestire quit con socChan.close() e key.cancel
-            }
+        while (byteLeft > 0) { //TODO da fixare
+            msgBuf.flip();
+            bytes = new byte[msgBuf.remaining()];
+            msgBuf.get(bytes);
+            message.append(new String(bytes));
+            msgBuf.clear();
+            byteLeft = socChanClient.read(msgBuf);
         }
+
+        if(byteLeft == -1) throw new IOException();
+        this.socUser = (Utente) objClient[1];
+
+        if (!message.toString().isEmpty()) messageParser(message.toString());
     }
 
-    public void messageParser(String message){
+    public void messageParser(String message) throws ClosedChannelException {
         StringTokenizer tokenizedLine = new StringTokenizer(message);
         String pw, nickUtente, nickAmico;
-        try{
+        try {
             switch (tokenizedLine.nextToken()) {
                 case "LOGIN":
                     nickUtente = tokenizedLine.nextToken();
@@ -147,9 +149,9 @@ public class Server {
                     break;
                 case "LOGOUT":
                     nickUtente = tokenizedLine.nextToken();
-                    try{
+                    try {
                         logout(nickUtente);
-                    }catch (Exception e){
+                    } catch (Exception e) {
                         sendResponseToClient(e.getMessage());
                     }
                     break;
@@ -164,9 +166,9 @@ public class Server {
                     break;
                 case "LISTA_AMICI":
                     nickUtente = tokenizedLine.nextToken();
-                    try{
+                    try {
                         lista_amici(nickUtente);
-                    }catch (Exception e){
+                    } catch (Exception e) {
                         sendResponseToClient(e.getMessage());
                     }
                     break;
@@ -183,29 +185,29 @@ public class Server {
                     break;
                 case "MOSTRA_SCORE":
                     nickUtente = tokenizedLine.nextToken();
-                    try{
+                    try {
                         mostra_punteggio(nickUtente);
-                    }catch (Exception e){
+                    } catch (Exception e) {
                         sendResponseToClient(e.getMessage());
                     }
                     break;
                 case "MOSTRA_CLASSIFICA":
                     nickUtente = tokenizedLine.nextToken();
-                    try{
+                    try {
                         mostra_classifica(nickUtente);
-                    }catch (Exception e){
+                    } catch (Exception e) {
                         sendResponseToClient(e.getMessage());
                     }
                     break;
                 default:
                     break;
             }
-        }catch (NoSuchElementException nse){
+        } catch (NoSuchElementException nse) {
             nse.printStackTrace();
         }
     }
 
-    public void login(String nickUtente, String password) {
+    public void login(String nickUtente, String password) throws ClosedChannelException {
         if (nickUtente == null || nickUtente.length() == 0) throw new IllegalArgumentException();
         if (password == null || password.length() == 0) throw new IllegalArgumentException();
         if (ListaUtenti.getInstance().isConnected(nickUtente))
@@ -218,23 +220,23 @@ public class Server {
 
         //associo il socket all'utente loggato
         ListaUtenti.getInstance().setConnected(nickUtente, true);
-        profilo.setSocChannel(this.socUser.getSocChannel());
+        profilo.setSelKey(this.socUser.getSelKey());
         profilo.setUdpPort(this.socUser.getUdpPort());
         this.socUser = profilo;
 
         sendResponseToClient("Login eseguito con successo");
     }
 
-    public void logout(String nickUtente) {
+    public void logout(String nickUtente) throws ClosedChannelException {
         if (nickUtente == null || nickUtente.length() == 0) throw new IllegalArgumentException();
         if (!ListaUtenti.getInstance().isConnected(nickUtente)) throw new UserAlreadyLoggedIn();
 
         ListaUtenti.getInstance().setConnected(nickUtente, false);
         sendResponseToClient("Logout eseguito con successo");
-        this.socUser = new Utente(this.socUser.getSocChannel());
+        this.socUser = new Utente(this.socUser.getSelKey());
     }
 
-    public void aggiungi_amico(String nickUtente, String nickAmico) {
+    public void aggiungi_amico(String nickUtente, String nickAmico) throws ClosedChannelException {
         if (nickUtente == null || nickUtente.length() == 0) throw new IllegalArgumentException();
         if (nickAmico == null || nickAmico.length() == 0) throw new IllegalArgumentException("nickAmico arrato");
         if (nickUtente.equals(nickAmico)) throw new IllegalArgumentException("Non puoi essere amico di te stesso");
@@ -244,14 +246,14 @@ public class Server {
         Utente profileAmico = connectedUSers.getUser(nickAmico);
 
         if (profileRichiedente == null || profileAmico == null) throw new FriendNotFound("Amico non trovato");
-        if(!profileAmico.isConnesso()) throw new FriendNotConnected("L'amico deve essere connesso"); //TODO vedere
+        if (!profileAmico.isConnesso()) throw new FriendNotConnected("L'amico deve essere connesso"); //TODO vedere
         profileRichiedente.addFriend(profileAmico.getNickname());
         profileAmico.addFriend(profileRichiedente.getNickname());
 
         sendResponseToClient("Amicizia " + nickUtente + "-" + nickAmico + " creata");
     }
 
-    public void lista_amici(String nickUtente) {
+    public void lista_amici(String nickUtente) throws ClosedChannelException {
         if (nickUtente == null || nickUtente.length() == 0) throw new IllegalArgumentException("nickUtente arrato");
 
         Utente profilo = ListaUtenti.getInstance().getUser(nickUtente);
@@ -267,7 +269,8 @@ public class Server {
         if (nickAmico == null || nickAmico.length() == 0) throw new IllegalArgumentException("nickAmico arrato");
         if (nickUtente.equals(nickAmico)) throw new IllegalArgumentException("Non puoi sfidare te stesso");
         Utente profiloUtente = ListaUtenti.getInstance().getUser(nickUtente);
-        if(!profiloUtente.isFriend(nickAmico)) throw new FriendNotFound("L'utente che vuoi sfidare non è nella tua lista amici");
+        if (!profiloUtente.isFriend(nickAmico))
+            throw new FriendNotFound("L'utente che vuoi sfidare non è nella tua lista amici");
         Utente amico = ListaUtenti.getInstance().getUser(nickAmico);
         if (amico != null && !amico.isConnesso()) throw new FriendNotConnected("L'amico non è connesso");
         //TODO gestire le IOEXC dei thread per lanciare un custom err
@@ -284,10 +287,10 @@ public class Server {
         byte[] ack = new byte[2];
         DatagramPacket rcvPck = new DatagramPacket(ack, ack.length);
 
-        try{
+        try {
             udpClient.receive(rcvPck);
             msg = new String(rcvPck.getData());
-        }catch (SocketTimeoutException e){
+        } catch (SocketTimeoutException e) {
             e.printStackTrace();
             udpClient.close();
             throw new NessunaRispostaDiSfida("L'amico non ha dato risposta.");
@@ -295,13 +298,17 @@ public class Server {
 
         udpClient.close();
 
-        if(msg.equals("no")) throw new SfidaRequestRefused("Ha rifiutato la sfida");
-        sendResponseToClient(nickAmico + " ha accettato la sfida!");
+        if (msg.equals("no")) throw new SfidaRequestRefused("Ha rifiutato la sfida");
+        //sendResponseToClient(nickAmico + " ha accettato la sfida!");
+        socChanClient.write(ByteBuffer.wrap((nickAmico + " ha accettato la sfida!" + "\n").getBytes(StandardCharsets.UTF_8)));
         System.out.println("Sfida accettata");
 
         Sfida objSfida = new Sfida(profiloUtente, amico);
         ListaSfide sfide = ListaSfide.getInstance();
         sfide.addSfida(objSfida);
+
+        profiloUtente.getSelKey().interestOps(0); //Setto a 0 per non fare danni con il selector e i thpool
+        amico.getSelKey().interestOps(0);
 
         Partita p1 = new Partita(profiloUtente, objSfida);
         Partita p2 = new Partita(amico, objSfida);
@@ -310,7 +317,7 @@ public class Server {
         //TODO vedere se creare un thread che fa pooling sulla struttura dati
     }
 
-    public void mostra_punteggio(String nickUtente) {
+    public void mostra_punteggio(String nickUtente) throws ClosedChannelException {
         if (nickUtente == null || nickUtente.length() == 0) throw new IllegalArgumentException("nickUtente arrato");
 
         Utente profilo = ListaUtenti.getInstance().getUser(nickUtente);
@@ -319,7 +326,7 @@ public class Server {
         sendResponseToClient("Punteggio: " + profilo.getPunteggioTotale());
     }
 
-    public void mostra_classifica(String nickUtente) {
+    public void mostra_classifica(String nickUtente) throws ClosedChannelException {
         if (nickUtente == null || nickUtente.length() == 0) throw new IllegalArgumentException("nickUtente errato");
 
         Utente profilo = ListaUtenti.getInstance().getUser(nickUtente);
@@ -328,7 +335,7 @@ public class Server {
         ArrayList<Utente> classificaAmici = new ArrayList<>();
         classificaAmici.add(profilo);
 
-        if(!profilo.getListaAmici().isEmpty()) { //se non ha amici ritorna solo il suo score saltando questo if
+        if (!profilo.getListaAmici().isEmpty()) { //se non ha amici ritorna solo il suo score saltando questo if
             for (String keyAmico : profilo.getListaAmici().values()) {
                 Utente amico = ListaUtenti.getInstance().getUser(keyAmico);
                 classificaAmici.add(amico);
@@ -337,22 +344,17 @@ public class Server {
         }
         //Serve per levare tutte le info extra dell'utente
         ArrayList<String> leaderBoardWithOnlyUserANdScore = new ArrayList<>();
-        for(Utente user : classificaAmici){
+        for (Utente user : classificaAmici) {
             leaderBoardWithOnlyUserANdScore.add(user.getNickname() + " " + user.getPunteggioTotale());
         }
         sendResponseToClient(Storage.objectToJSON(leaderBoardWithOnlyUserANdScore));
     }
 
-    private void sendResponseToClient(String testo) {
+    private void sendResponseToClient(String testo) throws ClosedChannelException {
         if (testo == null) throw new IllegalArgumentException();
         if (socChanClient == null) throw new NullPointerException();
 
-        try {
-            //socChanClient.write(ByteBuffer.wrap((testo + "\n").getBytes(StandardCharsets.UTF_8)));
-            Object[] objResponse = {testo + "\n", this.socUser};
-            socChanClient.register(selector, SelectionKey.OP_WRITE, objResponse);
-        } catch (IOError | IOException ecc) {
-            ecc.printStackTrace();
-        }
+        Object[] objResponse = {testo + "\n", this.socUser};
+        socChanClient.register(selector, SelectionKey.OP_WRITE, objResponse);
     }
 }
