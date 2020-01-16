@@ -5,8 +5,7 @@ import server.Settings;
 import server.Utente;
 import server.Utils;
 
-import java.io.IOError;
-import java.io.IOException;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.sql.Array;
 import java.sql.Timestamp;
@@ -18,9 +17,10 @@ public class Partita implements Runnable {
     private Timestamp inizioPartita, finePartita;
     private ArrayList<HashMap<String,String>> paroleDaIndovinare;
     private int paroleTotali, sbagliate, corrette, nonRisposte;
+    private BufferedReader inFromClient;
+    private BufferedOutputStream outToClient;
 
-
-    public Partita(Utente user, Sfida sfida){
+    public Partita(Utente user, Sfida sfida) throws IOException {
         this.user = user;
         sfida.generaTraduzioni();
         createDeepCopyOfWordsToGuess(sfida.getParoleDaIndovinare());
@@ -30,6 +30,8 @@ public class Partita implements Runnable {
         this.nonRisposte = 0;
         this.inizioPartita = new Timestamp(System.currentTimeMillis());
         this.finePartita = Utils.addSecondsToATimeStamp(this.inizioPartita, Settings.DURATA_PARTITA_SEC);
+        inFromClient = new BufferedReader(new InputStreamReader(user.getSocChannel().socket().getInputStream()));
+        outToClient = new BufferedOutputStream(user.getSocChannel().socket().getOutputStream());
     }
 
     private void createDeepCopyOfWordsToGuess(ArrayList<HashMap<String,String>> wordToGuess){
@@ -46,7 +48,7 @@ public class Partita implements Runnable {
 
             String parolaTradotta;
 
-            while (!Utils.isGivenTimeExpired(this.finePartita) && (parolaTradotta = user.getInFromClient().readLine()) != null) {
+            while (!Utils.isGivenTimeExpired(this.finePartita) && (parolaTradotta = inFromClient.readLine()) != null) {
 
                 if(parolaTradotta.equals(paroleDaIndovinare.get(i).get(parolaDaTradurre))){
                     this.corrette += 2;
@@ -70,11 +72,11 @@ public class Partita implements Runnable {
 
     private void sendResponseToClient(String testo) {
         if (testo == null) throw new IllegalArgumentException();
-        if(user.getOutToClient() == null) throw new NullPointerException();
+        if (outToClient == null) throw new NullPointerException();
 
         try {
-            user.getOutToClient().write((testo + "\n").getBytes(StandardCharsets.UTF_8), 0, testo.length() + 1);
-            user.getOutToClient().flush();
+            outToClient.write((testo + "\n").getBytes(StandardCharsets.UTF_8), 0, testo.length() + 1);
+            outToClient.flush();
         } catch (IOError | IOException ecc) {
             ecc.printStackTrace();
         }

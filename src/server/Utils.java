@@ -3,6 +3,7 @@ package server;
 import server.MyMemoryAPI.Converter;
 import server.MyMemoryAPI.MyMemoryResponse;
 import server.gamelogic.Sfida;
+import server.storage.Storage;
 
 import java.io.*;
 import java.net.*;
@@ -13,6 +14,8 @@ import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+
 import static java.util.concurrent.TimeUnit.*;
 
 public class Utils {
@@ -47,6 +50,37 @@ public class Utils {
         out.close();
         //TODO levare la print
         return getFullResponse(con);
+    }
+
+    public static void SalvaSuFileHandleSIGTERM(ExecutorService ex){
+        Thread thread = new Thread(new Thread(() -> {
+            try{
+                Thread.sleep(20000);
+                System.out.println("/!\\ LOG: Salvataggio automatico in corso...");
+                Storage.writeObjectToJSONFile(Settings.JSON_FILENAME, ListaUtenti.getInstance().getHashListaUtenti());
+                System.out.println("/!\\ LOG: Salvataggio completato.");
+            }catch (InterruptedException e){
+                e.printStackTrace();
+            }
+        }));
+        thread.setDaemon(true);
+        thread.start();
+
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            System.out.println("/!\\ Shutdown hook ran! /!\\");
+            ex.shutdownNow();
+            ex.shutdown();
+            while(!ex.isTerminated()){}
+
+            try{
+                thread.join();
+                thread.interrupt();
+            }catch (InterruptedException ecc){
+                System.out.println("Interrupt ricevuto " + ecc.getMessage());
+            }
+            Storage.writeObjectToJSONFile(Settings.JSON_FILENAME, ListaUtenti.getInstance().getHashListaUtenti());
+            System.out.println("LOG: Salvataggio completato.");
+        }));
     }
 
     private static String getFullResponse(HttpURLConnection con) throws IOException {

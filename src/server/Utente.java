@@ -8,6 +8,8 @@ import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.Serializable;
 import java.net.Socket;
+import java.nio.ByteBuffer;
+import java.nio.channels.SocketChannel;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class Utente implements Serializable {
@@ -19,20 +21,35 @@ public class Utente implements Serializable {
     private long punteggioTotale;
     private String nickname, password;
     private ConcurrentHashMap<String, String> listaAmici;
-    @JsonIgnore
-    private Socket client;
-    @JsonIgnore
-    private BufferedOutputStream outToClient;
-    @JsonIgnore
-    private BufferedReader inFromClient;
+    /*@JsonIgnore
+    private Socket client;*/
 
+    public ByteBuffer getReadBuf() {
+        if(readBuf == null) readBuf = ByteBuffer.allocate(1024);
+        return readBuf;
+    }
+
+    @JsonIgnore
+    private ByteBuffer readBuf;
+
+    public SocketChannel getSocChannel() {
+        return socChannel;
+    }
+
+    public void setSocChannel(SocketChannel socChannel) {
+        this.socChannel = socChannel;
+    }
+
+    @JsonIgnore
+    private SocketChannel socChannel;
+    /*
     public void setClient(Socket client) {
         this.client = client;
     }
 
     public Socket getClient() {
         return client;
-    }
+    }*/
 
     public String getNickname() {
         return nickname;
@@ -72,27 +89,9 @@ public class Utente implements Serializable {
         this.connesso = false;
     }
 
-    public BufferedOutputStream getOutToClient() {
-        return outToClient;
-    }
-
-    public void setOutToClient(BufferedOutputStream outToClient) {
-        this.outToClient = outToClient;
-    }
-
-    public BufferedReader getInFromClient() {
-        return inFromClient;
-    }
-
-    public void setInFromClient(BufferedReader inFromClient) {
-        this.inFromClient = inFromClient;
-    }
-
-    public Utente(Socket clnt, BufferedReader br, BufferedOutputStream outStream){
+    public Utente(SocketChannel sckChnl){
         this.udpPort = Settings.UDP_PORT;
-        this.client = clnt;
-        this.inFromClient = br;
-        this.outToClient = outStream;
+        this.socChannel = sckChnl;
     }
 
     public Utente(String nick, String password){

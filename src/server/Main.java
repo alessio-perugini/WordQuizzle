@@ -15,6 +15,10 @@ public class Main {
         RegistrazioneServer regServer = new RegistrazioneServer();
         regServer.start();
         Server objServer = new Server();
-        objServer.start();
+        try{
+            objServer.start();
+        }catch (Exception e){
+            e.printStackTrace();
+        }
     }
 }

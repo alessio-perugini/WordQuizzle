@@ -12,7 +12,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class UdpListener implements Runnable {
     private int udpPort;
-    private BufferedReader consoleRdr;
     public AtomicBoolean sfidaAnswered;
     public void setRispostaSfida(String rispostaSfida) {
         this.rispostaSfida = rispostaSfida;
@@ -20,9 +19,8 @@ public class UdpListener implements Runnable {
 
     private String rispostaSfida;
 
-    public UdpListener(int uPort, BufferedReader consoleRdr) {
+    public UdpListener(int uPort) {
         this.udpPort = uPort;
-        this.consoleRdr = consoleRdr;
         this.rispostaSfida = "";
         this.sfidaAnswered = new AtomicBoolean(false);
     }
@@ -32,7 +30,6 @@ public class UdpListener implements Runnable {
         byte[] buffer = new byte[100];
 
         DatagramPacket rcvPacket = new DatagramPacket(buffer, buffer.length);
-        BufferedReader cnslIn = new BufferedReader(new InputStreamReader(System.in));
         //TODO check udp port
         try(DatagramSocket server = new DatagramSocket(udpPort, InetAddress.getByName(Settings.HOST_NAME))){
             System.out.println("Server up!");
@@ -41,7 +38,8 @@ public class UdpListener implements Runnable {
                 server.receive(rcvPacket);
 
                 String msg = new String(rcvPacket.getData());
-                System.out.println(msg + " ti vuole sfidare accetti (si/no): ");
+                System.out.println(msg.trim() + " ti vuole sfidare accetti (si/no): ");
+                RichiestaSfida.getInstance().setSfidaAnswered(new AtomicBoolean(true));
 
                 while(!this.sfidaAnswered.get()); //Aspetto fino a che non mi da una risposta
 
@@ -56,6 +54,7 @@ public class UdpListener implements Runnable {
                     this.rispostaSfida = "";
                 }
 
+                RichiestaSfida.getInstance().setSfidaAnswered(new AtomicBoolean(false));
 
             }
         }catch (Exception e){
