@@ -19,7 +19,7 @@ import java.util.concurrent.PriorityBlockingQueue;
 public class Partita implements Runnable {
     private Utente user;
     private Timestamp inizioPartita, finePartita;
-    private ArrayList<HashMap<String,String>> paroleDaIndovinare;
+    private ArrayList<HashMap<String, String>> paroleDaIndovinare;
     private int paroleTotali, sbagliate, corrette, nonRisposte;
     SocketChannel client;
 
@@ -33,56 +33,52 @@ public class Partita implements Runnable {
         this.nonRisposte = 0;
         this.inizioPartita = new Timestamp(System.currentTimeMillis());
         this.finePartita = Utils.addSecondsToATimeStamp(this.inizioPartita, Settings.DURATA_PARTITA_SEC);
-        this.client = (SocketChannel)user.getSelKey().channel();
+        this.client = (SocketChannel) user.getSelKey().channel();
     }
 
-    private void createDeepCopyOfWordsToGuess(ArrayList<HashMap<String,String>> wordToGuess){
-        this.paroleDaIndovinare = (ArrayList<HashMap<String,String>>)wordToGuess.clone();
+    private void createDeepCopyOfWordsToGuess(ArrayList<HashMap<String, String>> wordToGuess) {
+        this.paroleDaIndovinare = (ArrayList<HashMap<String, String>>) wordToGuess.clone();
     }
 
     @Override
     public void run() {
         try {
             int i = 0;
-            String parolaDaTradurre = ((String)paroleDaIndovinare.get(i).keySet().toArray()[0]);
-            String sendChallenge = String.format("Challenge %d/%d: %s", i + 1, this.paroleTotali, parolaDaTradurre);
-            sendResponseToClient(sendChallenge);
 
-            ByteBuffer msg = ByteBuffer.allocate(1024);
-            long byteLeftToRead = client.read(msg);
-            if (byteLeftToRead == -1) throw  new IOException();
-            String parolaTradotta = new String(msg.array());
-            boolean firstTime = true;
-
-            while (!Utils.isGivenTimeExpired(this.finePartita)/* && (parolaTradotta = inFromClient.readLine()) != null*/) {
-                if(!firstTime){
-                    byteLeftToRead = client.read(msg);
-                    if (byteLeftToRead == -1) throw  new IOException();
-                    parolaTradotta = new String(msg.array());
-                }else{
-                    firstTime = false;
-                }
-
-                if(parolaTradotta.equals(paroleDaIndovinare.get(i).get(parolaDaTradurre))){
-                    this.corrette += 2;
-                }else{
+            do {
+                String parolaDaTradurre = ((String) paroleDaIndovinare.get(i).keySet().toArray()[0]);
+                String traduzioneGiusta = paroleDaIndovinare.get(i).get(parolaDaTradurre);
+                System.out.println(parolaDaTradurre + " -> " + traduzioneGiusta);
+                String sendChallenge = String.format("Challenge %d/%d: %s", i + 1, this.paroleTotali, parolaDaTradurre);
+                sendResponseToClient(sendChallenge);
+                String parolaTradotta = readResponse();
+                if (parolaTradotta.equals(traduzioneGiusta.toLowerCase())) {
+                    this.corrette ++;
+                } else {
                     this.sbagliate++;
                 }
-                i++;
-                String[] wordToguess = (String[])paroleDaIndovinare.get(i).keySet().toArray();
-                parolaDaTradurre = (wordToguess.length > 0) ? wordToguess[0]: "FINITO";
-                sendChallenge = String.format("Challenge %d/%d: %s", i + 1, this.paroleTotali, parolaDaTradurre);
-                sendResponseToClient(sendChallenge);
-            }
+            } while (!Utils.isGivenTimeExpired(this.finePartita) && (++i < this.paroleTotali));
 
             this.nonRisposte = this.paroleTotali - i;
-            int punteggioPartita = this.corrette - this.sbagliate;
+            int punteggioPartita = (this.corrette * 2) - this.sbagliate;
             user.addPunteggioPartita(punteggioPartita);
+
             String esitoPartita = String.format("Parole corrette: %d\n Parole errate: %d\n Parole non risposte: %d\n", this.corrette, this.sbagliate, this.nonRisposte);
             sendResponseToClient(esitoPartita);
-        } catch (IOException ecc) {
+        } catch (Exception ecc) {
             ecc.printStackTrace();
         }
+    }
+
+    private String readResponse() throws IOException {
+        if (client == null) throw new NullPointerException();
+        ByteBuffer msg = ByteBuffer.allocate(1024);
+        long byteLeft = 0;
+        do {
+            byteLeft = client.read(msg);
+            if (byteLeft == -1) throw new IOException();
+        } while (byteLeft == 0);
+        return new String(msg.array()).toLowerCase().trim();
     }
 
     private void sendResponseToClient(String testo) {

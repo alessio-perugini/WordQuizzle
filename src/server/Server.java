@@ -9,6 +9,7 @@ import server.storage.Storage;
 import javax.sound.sampled.AudioFormat;
 import java.io.*;
 import java.net.*;
+import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.nio.channels.*;
 import java.nio.charset.StandardCharsets;
@@ -47,7 +48,7 @@ public class Server {
                     // rimuove la chiave dal Selected Set, ma non dal registered Set
                     try {
                         if (key.isAcceptable()) {
-                            keyAcceptableRegister(selector, key);
+                            keyAcceptableRegister(selector);
                         } else if (key.isReadable()) {
                             keyRead(key);
                         } else if (key.isWritable()) {
@@ -67,13 +68,15 @@ public class Server {
     }
 
     public void crashClient() {
-        if (socUser != null && socUser.getNickname() != null)
+        if (socUser != null && socUser.getNickname() != null){
+            System.out.println(socUser.getNickname() + " è crashato!");
             ListaUtenti.getInstance().setConnected(socUser.getNickname(), false); //Se crasha lo disconnette
+        }
         socUser = null; //TODO vedere se è problematico
         System.out.println("Client closed connection");
     }
 
-    public void keyAcceptableRegister(Selector selector, SelectionKey slectionKey) throws IOException {
+    public void keyAcceptableRegister(Selector selector) throws IOException {
         SocketChannel client = serverSckChnl.accept();
         client.configureBlocking(false);
         SelectionKey sk = client.register(selector, SelectionKey.OP_READ);
@@ -102,11 +105,12 @@ public class Server {
         }
     }
 
-    public void keyRead(SelectionKey key) throws IOException {
+    public void keyRead(SelectionKey key) throws IOException, BufferUnderflowException {
         socChanClient = (SocketChannel) key.channel();
         Object[] objClient = (Object[]) key.attachment();
         ByteBuffer[] bfs = (ByteBuffer[]) objClient[0];
         long byteLeft = socChanClient.read(bfs);
+        if(byteLeft == -1) throw new IOException();
 
         byte[] bytes;
         ByteBuffer msgBuf = bfs[1];
@@ -122,9 +126,9 @@ public class Server {
             message.append(new String(bytes));
             msgBuf.clear();
             byteLeft = socChanClient.read(msgBuf);
+            if(byteLeft == -1) throw new IOException();
         }
 
-        if(byteLeft == -1) throw new IOException();
         this.socUser = (Utente) objClient[1];
         if (!message.toString().isEmpty()) messageParser(message.toString());
     }
