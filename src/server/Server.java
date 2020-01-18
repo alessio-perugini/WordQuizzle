@@ -59,8 +59,8 @@ public class Server {
                     } catch (IOException ex2) {
                         ex2.printStackTrace();
                         Object[] objClient = (Object[]) key.attachment();
-                        if(objClient.length >= 2){
-                            Utente uCrash = (Utente)objClient[1];
+                        if (objClient.length >= 2) {
+                            Utente uCrash = (Utente) objClient[1];
                             Utils.log("crashato " + uCrash.getNickname(), uCrash);
                         }
                         key.channel().close();
@@ -123,8 +123,8 @@ public class Server {
         byte[] bytes;
         ByteBuffer msgBuf = bfs[1];
         bfs[0].flip();
-        int l =0;
-        if(bfs[0].hasRemaining()){
+        int l = 0;
+        if (bfs[0].hasRemaining()) {
             l = bfs[0].getInt();
         }
 
@@ -386,7 +386,7 @@ public class Server {
         socChanClient.register(selector, SelectionKey.OP_WRITE, objResponse);
     }
 
-    private void gestoreSfide(){
+    private void gestoreSfide() {
         WorkerSfida workerSfida = new WorkerSfida();
         Thread thGestoreSfide = new Thread(workerSfida);
         thGestoreSfide.start();

@@ -88,7 +88,7 @@ public class Main {
                                     "lista_amici mostra la lista dei propri amici \n" +
                                     "sfida <nickAmico > richiesta di una sfida a nickAmico \n" +
                                     "mostra_punteggio mostra il punteggio dell’utente \n" +
-                                    "mostra_classifica mostra una classifica degli amici dell’utente (incluso l’utente stesso) \n"+
+                                    "mostra_classifica mostra una classifica degli amici dell’utente (incluso l’utente stesso) \n" +
                                     "quit per uscire");
                             break;
                         default:

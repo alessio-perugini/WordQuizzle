@@ -20,7 +20,7 @@ public class ID {
 
     static class Deserializer extends JsonDeserializer<ID> {
         @Override
-        public ID deserialize(JsonParser jsonParser, DeserializationContext deserializationContext) throws IOException, JsonProcessingException {
+        public ID deserialize(JsonParser jsonParser, DeserializationContext deserializationContext) throws IOException {
             ID value = new ID();
             switch (jsonParser.getCurrentToken()) {
                 case VALUE_NUMBER_INT:

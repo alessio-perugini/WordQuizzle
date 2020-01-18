@@ -27,6 +27,7 @@ public class Partita implements Runnable {
     }
 
     public boolean finita;
+
     public Timestamp getFinePartita() {
         return finePartita;
     }

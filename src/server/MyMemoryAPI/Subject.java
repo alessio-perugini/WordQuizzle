@@ -20,7 +20,7 @@ public class Subject {
 
     static class Deserializer extends JsonDeserializer<Subject> {
         @Override
-        public Subject deserialize(JsonParser jsonParser, DeserializationContext deserializationContext) throws IOException, JsonProcessingException {
+        public Subject deserialize(JsonParser jsonParser, DeserializationContext deserializationContext) throws IOException {
             Subject value = new Subject();
             switch (jsonParser.getCurrentToken()) {
                 case VALUE_TRUE:

@@ -1,15 +1,10 @@
 package server;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import server.MyMemoryAPI.Converter;
 import server.MyMemoryAPI.MyMemoryResponse;
-import server.gamelogic.Partita;
-import server.gamelogic.Sfida;
 import server.storage.Storage;
 
 import java.io.*;
-import java.net.DatagramSocket;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
@@ -22,7 +17,6 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public class Utils {
     public static String getParamsString(Map<String, String> params) {
@@ -58,7 +52,7 @@ public class Utils {
 
     public static void SalvaSuFileHandleSIGTERM(ExecutorService ex) {
         Thread thread = new Thread(new Thread(() -> {
-            while(!Thread.currentThread().isInterrupted()){
+            while (!Thread.currentThread().isInterrupted()) {
                 try {
                     Thread.sleep(20000);
                     System.out.println("/!\\ LOG: Salvataggio automatico in corso...");
@@ -74,7 +68,7 @@ public class Utils {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             System.out.println("/!\\ Shutdown hook ran! /!\\");
             ex.shutdown();
-            while (!ex.isTerminated());
+            while (!ex.isTerminated()) ;
 
             thread.interrupt();
 
@@ -137,20 +131,20 @@ public class Utils {
         return "";
     }
 
-    public static void printArrayList(ArrayList<String> ls, String prefix){
+    public static void printArrayList(ArrayList<String> ls, String prefix) {
         String toPrint = prefix + "";
         for (String elemento : ls) toPrint += elemento + ", ";
-        toPrint = toPrint.substring(0, toPrint.length() -2);
+        toPrint = toPrint.substring(0, toPrint.length() - 2);
         System.out.println(toPrint);
     }
 
-    public static void printListaAmici(ConcurrentHashMap<String, String> ls){
-        if(ls == null) return;
+    public static void printListaAmici(ConcurrentHashMap<String, String> ls) {
+        if (ls == null) return;
 
         Iterator it = ls.values().iterator();
         String toPrint = "Lista amici: ";
-        while (it.hasNext()){
-            String amico =  (String)it.next();
+        while (it.hasNext()) {
+            String amico = (String) it.next();
             toPrint += (it.hasNext()) ? amico + ", " : amico;
             it.remove();
         }
