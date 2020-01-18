@@ -1,33 +1,33 @@
 package server.gamelogic;
 
-import server.ListaUtenti;
 import server.Settings;
 import server.Utente;
 import server.Utils;
 
-import java.io.*;
-import java.net.Socket;
+import java.io.IOError;
+import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
 import java.nio.charset.StandardCharsets;
-import java.sql.Array;
 import java.sql.Timestamp;
-import java.util.*;
-import java.util.concurrent.PriorityBlockingQueue;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class Partita implements Runnable {
+    public Utente getUser() {
+        return user;
+    }
+
     private Utente user;
     private Timestamp inizioPartita, finePartita;
     private ArrayList<HashMap<String, String>> paroleDaIndovinare;
     private int paroleTotali, sbagliate, corrette, nonRisposte;
     SocketChannel client;
 
-    public Partita(Utente user, Sfida sfida) throws IOException {
+    public Partita(Utente user, Sfida sfida) {
         this.user = user;
-        sfida.generaTraduzioni();
-        createDeepCopyOfWordsToGuess(sfida.getParoleDaIndovinare());
+        createDeepCopyOfWordsToGuess(sfida.getParoleDaIndovinare());//TODO mesà che lo prendo diretatmente da sfida
         this.paroleTotali = this.paroleDaIndovinare.size();
         this.sbagliate = 0;
         this.corrette = 0;
@@ -53,10 +53,13 @@ public class Partita implements Runnable {
                 String sendChallenge = String.format("Challenge %d/%d: %s", i + 1, this.paroleTotali, parolaDaTradurre);
                 sendResponseToClient(sendChallenge);
                 String parolaTradotta = readResponse();
-                if (parolaTradotta.equals(traduzioneGiusta.toLowerCase())) {
-                    this.corrette++;
-                } else {
-                    this.sbagliate++;
+
+                if (!Utils.isGivenTimeExpired(this.finePartita)) {
+                    if (parolaTradotta.equals(traduzioneGiusta.toLowerCase())) {
+                        this.corrette++;
+                    } else {
+                        this.sbagliate++;
+                    }
                 }
             } while (!Utils.isGivenTimeExpired(this.finePartita) && (++i < this.paroleTotali));
 
@@ -68,6 +71,7 @@ public class Partita implements Runnable {
             sendResponseToClient(esitoPartita);
             user.setInPartita(new AtomicBoolean(false));
         } catch (Exception ecc) {
+            user.setInPartita(new AtomicBoolean(false));
             ecc.printStackTrace();
         }
     }

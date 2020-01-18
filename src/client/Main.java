@@ -114,14 +114,12 @@ public class Main {
                                     e.printStackTrace();
                                 }
                             } else {
-                                if (reqSfida.getSfidaAnswered().get()) {
+                                if (reqSfida.getSfidaToAnswer().get()) {
                                     if (currToken.equals("si")) {
-                                        udpSrv.sfidaAnswered.set(true);
                                         udpSrv.setRispostaSfida("si");
                                         sonoInPartita = true;
                                         read(client);//printa la prima parola da indovinare
                                     } else if (currToken.equals("no")) {
-                                        udpSrv.sfidaAnswered.set(false);
                                         udpSrv.setRispostaSfida("no");
                                         sonoInPartita = false; //TODO creare una funzione dove prende la read della console
                                     }

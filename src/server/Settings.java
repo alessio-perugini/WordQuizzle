@@ -11,5 +11,8 @@ public class Settings {
     public static final String HOST_NAME = "localhost";
     public static final String API_URL = "https://api.mymemory.translated.net/";
     public static final String JSON_FILENAME = "utenti.json";
+    public static final int MAX_PAROLE_DA_GENERARE = 10;
+    public static final int MIN_PAROLE_DA_GENERARE = 3;
+
 
 }

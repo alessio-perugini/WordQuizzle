@@ -3,8 +3,6 @@ package client;
 import server.Settings;
 import server.rmi.RegistrazioneService;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
 import java.rmi.Remote;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;

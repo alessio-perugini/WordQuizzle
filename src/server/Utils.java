@@ -2,21 +2,19 @@ package server;
 
 import server.MyMemoryAPI.Converter;
 import server.MyMemoryAPI.MyMemoryResponse;
-import server.gamelogic.Sfida;
 import server.storage.Storage;
 
 import java.io.*;
-import java.net.*;
+import java.net.DatagramSocket;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.net.URLEncoder;
+import java.nio.channels.SocketChannel;
 import java.nio.charset.StandardCharsets;
-import java.sql.Time;
 import java.sql.Timestamp;
-import java.util.Calendar;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
-
-import static java.util.concurrent.TimeUnit.*;
 
 public class Utils {
     private static final int MAX_PORT_NUM = 65535;
@@ -106,15 +104,15 @@ public class Utils {
         MyMemoryResponse data = Converter.fromJsonString(content.toString());
         return data.getResponseData().getTranslatedText();
     }
-
+/*
     public static void printDizionarioDellaSfida(Sfida objSfida) {
-        objSfida.generaTraduzioni();
+        //objSfida.generaTraduzioni();
         for (Iterator<HashMap<String, String>> elm = objSfida.getParoleDaIndovinare().iterator(); elm.hasNext(); ) {
             HashMap<String, String> words = elm.next();
             Object[] keySet = (Object[]) words.keySet().toArray();
             System.out.println((String) keySet[0] + " -> " + words.get(keySet[0]));
         }
-    }
+    }*/
 
     public static boolean udpPortAvailable(int port) {
         if (port < 49152 || port > 65535) throw new IllegalArgumentException("Invalid start port: " + port);
@@ -142,4 +140,30 @@ public class Utils {
         Timestamp now = new Timestamp(System.currentTimeMillis());
         return end.before(now);
     }
+
+    public static void log(String message) {
+        String ora = new Timestamp(System.currentTimeMillis()).toLocalDateTime().toString();
+        System.out.println("[" + ora + "] " + message);
+    }
+
+    public static String getIpRemoteFromProfile(Utente user) {
+        try {
+            return (user != null) ? ((SocketChannel) user.getSelKey().channel()).getRemoteAddress().toString() : "";
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return "";
+    }
+
+    public static void log(String message, Utente user) {
+        try {
+            String ip = getIpRemoteFromProfile(user);
+            String ora = new Timestamp(System.currentTimeMillis()).toLocalDateTime().toString();
+            System.out.println("[" + ora + "] (" + ip + ") " + message);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+    }
+
 }

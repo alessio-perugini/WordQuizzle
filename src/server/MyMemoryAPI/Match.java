@@ -1,8 +1,6 @@
 package server.MyMemoryAPI;
 
-import java.util.*;
-
-import com.fasterxml.jackson.annotation.*;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class Match {
     private ID id;

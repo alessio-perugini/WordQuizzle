@@ -1,7 +1,5 @@
 package client;
 
-import server.ListaUtenti;
-
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class RichiestaSfida {
@@ -12,17 +10,17 @@ public class RichiestaSfida {
         return instance;
     }
 
-    public AtomicBoolean getSfidaAnswered() {
-        return sfidaAnswered;
+    public AtomicBoolean getSfidaToAnswer() {
+        return sfidaToAnswer;
     }
 
-    public void setSfidaAnswered(AtomicBoolean sfidaAnswered) {
-        this.sfidaAnswered = sfidaAnswered;
+    public void setSfidaToAnswer(AtomicBoolean sfidaToAnswer) {
+        this.sfidaToAnswer = sfidaToAnswer;
     }
 
-    public AtomicBoolean sfidaAnswered;
+    public AtomicBoolean sfidaToAnswer;
 
     private RichiestaSfida() {
-        sfidaAnswered = new AtomicBoolean(false);
+        sfidaToAnswer = new AtomicBoolean(false);
     }
 }

@@ -2,15 +2,9 @@ package server;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import errori.FriendAlreadyExists;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
-import java.io.BufferedOutputStream;
-import java.io.BufferedReader;
 import java.io.Serializable;
-import java.net.Socket;
-import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
-import java.nio.channels.SocketChannel;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 

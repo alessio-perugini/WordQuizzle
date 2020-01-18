@@ -2,8 +2,6 @@ package client;
 
 import server.Settings;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
@@ -16,6 +14,7 @@ public class UdpListener implements Runnable {
     public AtomicBoolean sfidaAnswered;
 
     public void setRispostaSfida(String rispostaSfida) {
+        this.sfidaAnswered.set(true);
         this.rispostaSfida = rispostaSfida;
     }
 
@@ -42,7 +41,7 @@ public class UdpListener implements Runnable {
 
                 String msg = new String(rcvPacket.getData());
                 System.out.println(msg.trim() + " ti vuole sfidare accetti (si/no): ");
-                richiestaSfida.setSfidaAnswered(new AtomicBoolean(true));
+                richiestaSfida.setSfidaToAnswer(new AtomicBoolean(true));
 
                 while (!this.sfidaAnswered.get()) ; //Aspetto fino a che non mi da una risposta
 
@@ -57,7 +56,7 @@ public class UdpListener implements Runnable {
                     this.rispostaSfida = "";
                 }
 
-                richiestaSfida.setSfidaAnswered(new AtomicBoolean(false));
+                richiestaSfida.setSfidaToAnswer(new AtomicBoolean(false));
 
             }
         } catch (Exception e) {

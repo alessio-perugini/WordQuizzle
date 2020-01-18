@@ -6,8 +6,7 @@ import server.gamelogic.Partita;
 import server.gamelogic.Sfida;
 import server.storage.Storage;
 
-import javax.sound.sampled.AudioFormat;
-import java.io.*;
+import java.io.IOException;
 import java.net.*;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
@@ -57,6 +56,7 @@ public class Server {
                         }
                     } catch (IOException ex2) {
                         ex2.printStackTrace();
+                        Utils.log(String.format("%s è crashato!", this.socUser.getNickname()), this.socUser);
                         key.channel().close();
                         key.cancel();
                         crashClient();
@@ -87,6 +87,8 @@ public class Server {
         socUser = new Utente(sk);
         Object[] objClient = {bfs, socUser};
         sk.attach(objClient);
+
+        Utils.log(client.getRemoteAddress().toString());
     }
 
     public void keyWrite(SelectionKey key) throws IOException {
@@ -217,7 +219,7 @@ public class Server {
         }
     }
 
-    public void login(String nickUtente, String password) throws ClosedChannelException {
+    public void login(String nickUtente, String password) throws IOException {
         if (nickUtente == null || nickUtente.length() == 0) throw new IllegalArgumentException();
         if (password == null || password.length() == 0) throw new IllegalArgumentException();
         if (ListaUtenti.getInstance().isConnected(nickUtente))
@@ -233,6 +235,7 @@ public class Server {
         profilo.setSelKey(this.socUser.getSelKey());
         profilo.setUdpPort(this.socUser.getUdpPort());
         this.socUser = profilo;
+        Utils.log(nickUtente + " loggato!", this.socUser);
 
         sendResponseToClient("Login eseguito con successo");
     }
@@ -244,6 +247,7 @@ public class Server {
         ListaUtenti.getInstance().setConnected(nickUtente, false);
         sendResponseToClient("Logout eseguito con successo");
         this.socUser = new Utente(this.socUser.getSelKey());
+        Utils.log(nickUtente + " logout!", this.socUser);
     }
 
     public void aggiungi_amico(String nickUtente, String nickAmico) throws ClosedChannelException {
@@ -256,11 +260,12 @@ public class Server {
         Utente profileAmico = connectedUSers.getUser(nickAmico);
 
         if (profileRichiedente == null || profileAmico == null) throw new FriendNotFound("Amico non trovato");
-        if (!profileAmico.isConnesso()) throw new FriendNotConnected("L'amico deve essere connesso"); //TODO vedere
+        if (!profileAmico.isConnesso()) throw new FriendNotConnected("L'amico deve essere connesso");
         profileRichiedente.addFriend(profileAmico.getNickname());
         profileAmico.addFriend(profileRichiedente.getNickname());
 
         sendResponseToClient("Amicizia " + nickUtente + "-" + nickAmico + " creata");
+        Utils.log(String.format("%s ha aggiunto %s alla lista amici (%s) , (%s)", nickUtente, nickAmico, Utils.getIpRemoteFromProfile(profileRichiedente), Utils.getIpRemoteFromProfile(profileAmico)));
     }
 
     public void lista_amici(String nickUtente) throws ClosedChannelException {
@@ -272,6 +277,7 @@ public class Server {
         ConcurrentHashMap<String, String> listaAmici = profilo.getListaAmici();
         String listaAmiciAsJson = Storage.objectToJSON(listaAmici);
         sendResponseToClient(listaAmiciAsJson);
+        Utils.log(String.format("%s %s ha chiesto di vedere la lista amici di %s", this.socUser.getNickname(), Utils.getIpRemoteFromProfile(this.socUser), nickUtente), profilo);
     }
 
     public void sfida(String nickUtente, String nickAmico) throws IOException {
@@ -319,16 +325,18 @@ public class Server {
         //sendResponseToClient(nickAmico + " ha accettato la sfida!");
         socChanClient.write(ByteBuffer.wrap((nickAmico + " ha accettato la sfida!" + "\n").getBytes(StandardCharsets.UTF_8)));
         System.out.println("Sfida accettata");
-
         amico.setInPartita(new AtomicBoolean(true));
-        Sfida objSfida = new Sfida(profiloUtente, amico);
+
+        Sfida objSfida = new Sfida(profiloUtente.getNickname().hashCode() + new Random().nextInt(4));
         Partita partitaSfidante = new Partita(profiloUtente, objSfida);
         Partita partitaAmico = new Partita(amico, objSfida);
+        objSfida.setPartite(partitaSfidante, partitaAmico);
         ListaSfide.getInstance().addSfida(objSfida);
-        objSfida.setPartitaSfidante(partitaSfidante);
-        objSfida.setPartitaSfidato(partitaAmico);
+
         ex.execute(partitaSfidante);
         ex.execute(partitaAmico);
+        Utils.log(String.format("%s ha sfidato %s (%s) , (%s)", nickUtente, nickAmico, Utils.getIpRemoteFromProfile(profiloUtente), Utils.getIpRemoteFromProfile(amico)));
+
         //TODO vedere se creare un thread che fa pooling sulla struttura dati
     }
 
@@ -339,6 +347,7 @@ public class Server {
         if (profilo == null) throw new UserDoesntExists("L'utente cercato non esiste");
 
         sendResponseToClient("Punteggio: " + profilo.getPunteggioTotale());
+        Utils.log(String.format("%s %s ha chiesto di vedere il punteggio di %s", this.socUser.getNickname(), Utils.getIpRemoteFromProfile(this.socUser), nickUtente), profilo);
     }
 
     public void mostra_classifica(String nickUtente) throws ClosedChannelException {
@@ -363,6 +372,7 @@ public class Server {
             leaderBoardWithOnlyUserANdScore.add(user.getNickname() + " " + user.getPunteggioTotale());
         }
         sendResponseToClient(Storage.objectToJSON(leaderBoardWithOnlyUserANdScore));
+        Utils.log(String.format("%s %s ha chiesto di vedere la classifica di %s", this.socUser.getNickname(), Utils.getIpRemoteFromProfile(this.socUser), nickUtente), profilo);
     }
 
     private void sendResponseToClient(String testo) throws ClosedChannelException {

@@ -12,9 +12,6 @@ class UtilsTest {
 
     @Test
     void printDizionarioDellaSfida() {
-        Sfida objSfida = new Sfida(new Utente("Claudio", "123456"), new Utente("Cristiana", "asd1asd"));
-        Utils.printDizionarioDellaSfida(objSfida);
-
     }
 
     @Test

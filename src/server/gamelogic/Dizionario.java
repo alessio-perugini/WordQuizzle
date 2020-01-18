@@ -4,14 +4,12 @@ import server.Settings;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.PriorityBlockingQueue;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 
 public class Dizionario {
     private ArrayList<String> dizionario;
