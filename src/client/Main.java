@@ -17,107 +17,77 @@ import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.NoSuchElementException;
 import java.util.StringTokenizer;
-import java.util.concurrent.ConcurrentHashMap;
 
 public class Main {
-
-    static int udpPort = 50002;
+    static int udpPort = Settings.UDP_PORT;
     static Utente profiloLoggato = null;
     static final BufferedReader consoleRdr = new BufferedReader(new InputStreamReader(System.in));
     static RichiestaSfida reqSfida = RichiestaSfida.getInstance();
     static boolean sonoInPartita = false;
-    static boolean quit;
+    static boolean quit = false; //server per uscire dal client
+    static SocketChannel client;
+    static UdpListener udpSrv;
+    static String scelta; //è la lettura della console
 
-    public static void main(String[] args) {
-        udpPort = (args.length > 0) ? Integer.parseInt(args[0]) : 50002;
-        if (udpPort < 50002) udpPort = 50002;
+    public static void main(String[] args) {//Se ha argomenti il primo è la porta udp del server delle sfide su cui ascoltare
+        udpPort = (args.length > 0) ? Integer.parseInt(args[0]) : Settings.UDP_PORT;
+        if (udpPort < Settings.UDP_PORT) udpPort = Settings.UDP_PORT; //il server deve essere minimo sulla porta 50002
 
-        UdpListener udpSrv = new UdpListener(udpPort);
+        udpSrv = new UdpListener(udpPort);//Istanzio l'udp server e avvio il thread
         Thread thUdpManager = new Thread(udpSrv);
         thUdpManager.start();
 
-        try {
+        try {//instauro la connessione con il server tcp di gioco
             SocketAddress address = new InetSocketAddress(InetAddress.getByName("localhost"), Settings.TCP_PORT);
-            SocketChannel client = SocketChannel.open(address);
-
-            quit = false;
-            String scelta;
+            client = SocketChannel.open(address);
 
             while (!quit) {
-                scelta = consoleRdr.readLine().trim();
+                scelta = consoleRdr.readLine().trim();//leggo la scelta dell'utente levando eventuali spazi vuoti alla fine
                 try {
-                    StringTokenizer tokenizedLine = new StringTokenizer(scelta);
-                    String currToken = tokenizedLine.nextToken();
+                    StringTokenizer tokenizedLine = new StringTokenizer(scelta); //Server per spezzare la stringa per gli spazi
+                    String currToken = tokenizedLine.nextToken();//prendo la prima stringa ottenuta dallo split dei spazi
                     switch (currToken) {
                         case "quit":
                             quit = true;
-                            client.close();
+                            client.close();//chiudo la connessione con il server
                             break;
                         case "registra_utente":
                             registrazione(tokenizedLine);
                             break;
                         case "login":
-                            login(tokenizedLine, client);
+                            login(tokenizedLine);
                             break;
                         case "logout":
-                            logout(client);
+                            logout();
                             break;
                         case "aggiungi_amico":
-                            aggiungiAmico(tokenizedLine, client);
+                            aggiungiAmico(tokenizedLine);
                             break;
                         case "lista_amici":
-                            listaAmici(client);
+                            listaAmici();
                             break;
                         case "sfida":
-                            sfida(tokenizedLine, client);
+                            sfida(tokenizedLine);
                             break;
                         case "mostra_punteggio":
-                            punteggio(client);
+                            punteggio();
                             break;
                         case "mostra_classifica":
-                            classifica(client);
+                            classifica();
                             break;
                         case "--help":
-                            System.out.println("usage : COMMAND [ ARGS ...]\n" +
-                                    "Commands: \n" +
-                                    "registra_utente <nickUtente > <password > registra l' utente \n" +
-                                    "login <nickUtente > <password > effettua il login logout effettua il logout \n" +
-                                    "logout effettua il logout \n" +
-                                    "aggiungi_amico <nickAmico> crea relazione di amicizia con nickAmico lista_amici mostra la lista dei propri amici \n" +
-                                    "lista_amici mostra la lista dei propri amici \n" +
-                                    "sfida <nickAmico > richiesta di una sfida a nickAmico \n" +
-                                    "mostra_punteggio mostra il punteggio dell’utente \n" +
-                                    "mostra_classifica mostra una classifica degli amici dell’utente (incluso l’utente stesso) \n" +
-                                    "quit per uscire");
+                            help();
                             break;
                         default:
-                            if (sonoInPartita) {
-                                try {
-                                    write(currToken, client);
-                                    String srvResp = read(client);
-                                    if (srvResp.contains("Hai tradotto correttamente")) {
-                                        read(client);//mi metto in lettura per dirmi se ho vinto o perso!
-                                        sonoInPartita = false;
-                                    }
-                                } catch (Exception e) {
-                                    e.printStackTrace();
-                                }
+                            if (sonoInPartita) { //se sono in partita game gestisce l'input della console
+                                game(currToken);
+                            } else if (reqSfida.getSfidaToAnswer().get()) { //se devo rispondere ad una req di sfida
+                                challangeRequest(currToken);
                             } else {
-                                if (reqSfida.getSfidaToAnswer().get()) {
-                                    if (currToken.equals("si")) {
-                                        udpSrv.setRispostaSfida("si");
-                                        sonoInPartita = true;
-                                        printServerResponse("Attendi qualche istante per la generazione delle parole");
-                                        read(client);//printa la prima parola da indovinare
-                                    } else if (currToken.equals("no")) {
-                                        udpSrv.setRispostaSfida("no");
-                                        sonoInPartita = false;
-                                    }
-                                } else {
-                                    System.out.println("Comando non trovato, per la lista di comanda digitare (--help)");
-                                }
+                                System.out.println("Comando non trovato, per la lista di comanda digitare (--help)");
                             }
                             break;
                     }
@@ -129,23 +99,64 @@ public class Main {
             ex.printStackTrace();
         }
         try {
-            udpSrv.quit();
+            udpSrv.quit();//Server per terminare il server udp chiudendo la connessione sbloccandomi da eventuali read
             thUdpManager.interrupt();
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    public static void login(StringTokenizer tokenizedLine, SocketChannel client) {
+    private static void help() {
+        System.out.println("usage : COMMAND [ ARGS ...]\n" +
+                "Commands: \n" +
+                "registra_utente <nickUtente > <password > registra l' utente \n" +
+                "login <nickUtente > <password > effettua il login logout effettua il logout \n" +
+                "logout effettua il logout \n" +
+                "aggiungi_amico <nickAmico> crea relazione di amicizia con nickAmico lista_amici mostra la lista dei propri amici \n" +
+                "lista_amici mostra la lista dei propri amici \n" +
+                "sfida <nickAmico > richiesta di una sfida a nickAmico \n" +
+                "mostra_punteggio mostra il punteggio dell’utente \n" +
+                "mostra_classifica mostra una classifica degli amici dell’utente (incluso l’utente stesso) \n" +
+                "quit per uscire");
+    }
+
+    private static void challangeRequest(String currToken) throws IOException {
+        if (currToken.equals("si")) {
+            udpSrv.setRispostaSfida("si");//risultato che deve inoltrare il server udp al client udp
+            sonoInPartita = true; //I prossimi input da console saranno gestiti dalla func game()
+            System.out.println("Attendi qualche istante per la generazione delle parole");
+            printServerResponse(read()); //printa la prima parola da indovinare
+        } else if (currToken.equals("no")) {
+            udpSrv.setRispostaSfida("no");//risultato che deve inoltrare il server udp al client udp
+            System.out.println("Sfida rifiutata");
+            sonoInPartita = false;
+        }
+    }
+
+    private static void game(String currToken) {
+        try {
+            write(currToken); //invia la parola tradotta
+            String srvResp = read(); //legge nuove parole o l'esito della partita
+            System.out.println(srvResp);
+            if (srvResp.contains("Hai tradotto correttamente")) { //è l'ultimo messaggio prima di sapere se ho vinto
+                printServerResponse(read()); //mi metto in lettura per sapere se ho vinto o perso!
+                sonoInPartita = false;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void login(StringTokenizer tokenizedLine) {
         try {
             String nick = tokenizedLine.nextToken();
             String password = tokenizedLine.nextToken();
 
             if (profiloLoggato != null && profiloLoggato.getNickname().equals(nick))
                 throw new UserAlreadyLoggedIn("Sei già loggato come " + nick);
-            if (profiloLoggato != null) logout(client); //Se logga un altro utente effettua il logout
+            if (profiloLoggato != null) logout(); //Se logga un altro utente effettua il logout di quello corrente
 
-            String esito = scriviLeggi("LOGIN " + nick + " " + password + " " + udpPort, client);
+            String esito = scriviLeggi("LOGIN " + nick + " " + password + " " + udpPort);
             printServerResponse(esito);
             if (esito.equals("Login eseguito con successo")) profiloLoggato = new Utente(nick, password);
         } catch (NoSuchElementException e) {
@@ -153,26 +164,25 @@ public class Main {
         } catch (UserAlreadyLoggedIn ue) {
             System.out.println(ue.getMessage());
         }
-
     }
 
-    public static void logout(SocketChannel client) {
+    public static void logout() {
         try {
             if (profiloLoggato == null) {
                 System.out.println("Logout già effetuato");
                 return;
             }
-            String esito = scriviLeggi("LOGOUT " + profiloLoggato.getNickname(), client);
+
+            String esito = scriviLeggi("LOGOUT " + profiloLoggato.getNickname());
             printServerResponse(esito);
             if (esito.equals("Logout eseguito con successo")) profiloLoggato = null;
         } catch (NoSuchElementException e) {
             System.out.println("logout effettua il logout");
         }
-
     }
 
     public static void registrazione(StringTokenizer tokenizedLine) {
-        try {
+        try {//invia la richiesta di registrazione al server rmi
             RmiClient rmiReg = new RmiClient();
             String nickname = tokenizedLine.nextToken();
             String pw = tokenizedLine.nextToken();
@@ -182,19 +192,23 @@ public class Main {
         }
     }
 
-    public static void sfida(StringTokenizer tokenizedLine, SocketChannel client) {
+    public static void sfida(StringTokenizer tokenizedLine) {
         try {
-            String amico = tokenizedLine.nextToken();
             if (profiloLoggato == null) {
                 System.out.println("Devi prima effettuare il login!");
                 return;
             }
+            String amico = tokenizedLine.nextToken();
+
             printServerResponse("In attesa di una risposta da parte dell'amico.");
-            String response = scriviLeggi("SFIDA " + profiloLoggato.getNickname() + " " + amico + "", client);
+            String response = scriviLeggi("SFIDA " + profiloLoggato.getNickname() + " " + amico + "");
             printServerResponse(response);
-            sonoInPartita = response.contains("ha accettato la sfida!");
+            sonoInPartita = response.contains("ha accettato la sfida!");// se ritorna questa stringa allora diventa true
             try {
-                if (sonoInPartita) read(client); //legge la prima challenge
+                if (sonoInPartita) {
+                    System.out.println("Attendi qualche istante per la generazione delle parole");
+                    printServerResponse(read()); //legge la prima challenge
+                }
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -203,19 +217,22 @@ public class Main {
         }
     }
 
-    public static void classifica(SocketChannel client) {
+    public static void classifica() {
         try {
             if (profiloLoggato == null) {
                 System.out.println("Devi prima effettuare il login!");
                 return;
             }
-            String classificaJSON = scriviLeggi("MOSTRA_CLASSIFICA " + profiloLoggato.getNickname(), client);
+
+            String classificaJSON = scriviLeggi("MOSTRA_CLASSIFICA " + profiloLoggato.getNickname());
+            //Prendo dalla risposta JSON e converto in una lista di stringhe
             final ObjectMapper mapper = new ObjectMapper();
             ArrayList<String> listaClassifica = mapper.reader()
                     .forType(new TypeReference<ArrayList<String>>() {
                     })
                     .readValue(classificaJSON.getBytes());
-            Utils.printArrayList(listaClassifica, "Classifica: ");
+
+            Utils.printArrayList(listaClassifica, "Classifica: ");//printo in modo formattato l'oggetto letto dal json
         } catch (NoSuchElementException e) {
             System.out.println("mostra_classifica mostra una classifica degli amici dell’utente");
         } catch (IOException ioe) {
@@ -223,50 +240,51 @@ public class Main {
         }
     }
 
-    public static void punteggio(SocketChannel client) {
+    public static void punteggio() {
         try {
             if (profiloLoggato == null) {
                 System.out.println("Devi prima effettuare il login!");
                 return;
             }
-            String response = scriviLeggi("MOSTRA_SCORE " + profiloLoggato.getNickname(), client);
-            printServerResponse(response);
 
+            String response = scriviLeggi("MOSTRA_SCORE " + profiloLoggato.getNickname());
+            printServerResponse(response);
         } catch (NoSuchElementException e) {
             System.out.println("mostra_punteggio mostra il punteggio dell’utente");
         }
     }
 
-    public static void aggiungiAmico(StringTokenizer tokenizedLine, SocketChannel client) {
+    public static void aggiungiAmico(StringTokenizer tokenizedLine) {
         try {
             String amico = tokenizedLine.nextToken();
             if (profiloLoggato == null) {
                 System.out.println("Devi prima effettuare il login!");
                 return;
             }
-            String response = scriviLeggi("ADD_FRIEND " + profiloLoggato.getNickname() + " " + amico + "", client);
-            printServerResponse(response);
 
+            String response = scriviLeggi("ADD_FRIEND " + profiloLoggato.getNickname() + " " + amico + "");
+            printServerResponse(response);
         } catch (NoSuchElementException e) {
             System.out.println("aggiungi_amico <nickAmico> crea relazione di amicizia con nickAmico");
         }
     }
 
-    public static void listaAmici(SocketChannel client) {
+    public static void listaAmici() {
         try {
             if (profiloLoggato == null) {
                 System.out.println("Devi prima effettuare il login!");
                 return;
             }
-            String amiciJSON = scriviLeggi("LISTA_AMICI " + profiloLoggato.getNickname(), client);
 
-            final ObjectMapper mapper = new ObjectMapper();
-            ConcurrentHashMap<String, String> listaAmici = mapper.reader()
-                    .forType(new TypeReference<ConcurrentHashMap<String, String>>() {
+            String amiciJSON = scriviLeggi("LISTA_AMICI " + profiloLoggato.getNickname());
+
+            final ObjectMapper mapper = new ObjectMapper();//Trasformo il json in oggetto di tipo HashMap
+            HashMap<String, String> listaAmici = mapper.reader()
+                    .forType(new TypeReference<HashMap<String, String>>() {
                     })
                     .readValue(amiciJSON.getBytes());
 
-            Utils.printListaAmici(listaAmici);
+            Utils.printListaAmici(listaAmici);//printo in modo formattato l'oggetto letto dal json
         } catch (NoSuchElementException e) {
             System.out.println("lista_amici mostra la lista dei propri amici");
         } catch (IOException ioe) {
@@ -274,36 +292,28 @@ public class Main {
         }
     }
 
-    static void write(String messaggio, SocketChannel client) {
+    static void write(String messaggio) {
         try {
-            messaggio += "\n";
-            client.write(ByteBuffer.wrap(messaggio.getBytes(StandardCharsets.UTF_8)));
+            messaggio += "\n"; //aggiungo la terminazione al messaggio
+            client.write(ByteBuffer.wrap(messaggio.getBytes(StandardCharsets.UTF_8))); //Cre un bytebuffer dai byte del mex
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    static String read(SocketChannel client) throws IOException {
-        ByteBuffer buffer = ByteBuffer.allocate(1024);
-        int byteRead = client.read(buffer);
-        isServerCrashed(byteRead);
-        String response = new String(buffer.array()).trim();
-        System.out.println(response);
+    static String read() throws IOException {
+        ByteBuffer buffer = ByteBuffer.allocate(Settings.READ_BYTE_BUFFER_SIZE);
+        int byteRead = client.read(buffer); //leggo la risposta del server nel bytebyffer
+        isServerCrashed(byteRead); //controllo che il server non sia crashato
+        String response = new String(buffer.array()).trim(); //creo una stringa dalla lettura del buffer
         buffer.clear();
         return response;
     }
 
-    public static String scriviLeggi(String messaggio, SocketChannel client) {
+    public static String scriviLeggi(String messaggio) {
         try {
-            messaggio += "\n";
-            client.write(ByteBuffer.wrap(messaggio.getBytes(StandardCharsets.UTF_8)));
-
-            ByteBuffer buffer = ByteBuffer.allocate(1024);
-            int byteRead = client.read(buffer);
-            isServerCrashed(byteRead);
-            String response = new String(buffer.array()).trim();
-            buffer.clear();
-            return response;
+            write(messaggio); //Scrivi al server il mex
+            return read(); //Leggi dal server la risposta del mex inviato
         } catch (IOException ex) {
             ex.printStackTrace();
         }
@@ -311,7 +321,7 @@ public class Main {
     }
 
     private static void isServerCrashed(int byteRead) throws IOException {
-        if (byteRead >= 0) return;
+        if (byteRead >= 0) return; //se è != da -1 non fa nulla
         quit = true;
         System.out.println("Il server è crashato!");
         throw new IOException("Server crashed");

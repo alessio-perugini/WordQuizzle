@@ -10,9 +10,8 @@ import java.util.Iterator;
 import java.util.Random;
 
 public class Sfida {
-    //private Utente userSfidante, userSfidato;
     private Partita partitaSfidante, partitaSfidato;
-    private int idSfida, K_paroleDaInviare;
+    private int idSfida;
     private ArrayList<HashMap<String, String>> paroleDaIndovinare;
 
     public ArrayList<HashMap<String, String>> getParoleDaIndovinare() {
@@ -34,11 +33,11 @@ public class Sfida {
     }
 
     public Sfida(int idSfida) {
-        Random rand = new Random();
+        Random rand = new Random();//sceglie quante parole deve generare
         int wordToSend = rand.nextInt(Settings.MAX_PAROLE_DA_GENERARE);
         this.idSfida = idSfida;
-        this.K_paroleDaInviare = Math.max(wordToSend, Settings.MIN_PAROLE_DA_GENERARE);
-        this.paroleDaIndovinare = Dizionario.getInstance().getNwordsFromDictionary(K_paroleDaInviare);
+        int k_paroleDaInviare = Math.max(wordToSend, Settings.MIN_PAROLE_DA_GENERARE);
+        this.paroleDaIndovinare = Dizionario.getInstance().getNwordsFromDictionary(k_paroleDaInviare);
         generaTraduzioni();
     }
 
@@ -49,7 +48,7 @@ public class Sfida {
 
     private void generaTraduzioni() {
         for (Iterator<HashMap<String, String>> elm = this.paroleDaIndovinare.iterator(); elm.hasNext(); ) {
-            try {
+            try {//Aggiungo le coppie della traduzione data dall'api con sendHttpRequest
                 HashMap<String, String> elemento = elm.next();
                 Object[] keys = elemento.keySet().toArray();
                 elemento.replace((String) keys[0], Utils.sendHttpRequest((String) keys[0]));

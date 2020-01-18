@@ -18,9 +18,9 @@ public class RmiClient {
 
         try {
             Registry r = LocateRegistry.getRegistry(Settings.RMI_PORT);
-            remoteObject = r.lookup("REGISTRAZIONE-SERVER");
+            remoteObject = r.lookup("REGISTRAZIONE-SERVER"); //cerco dal rmiServer la funzione di registrazione
             serverObject = (RegistrazioneService) remoteObject;
-            return serverObject.registra_utente(username, pw);
+            return serverObject.registra_utente(username, pw); //chiamo la funzione del server per registrarmi
         } catch (IllegalArgumentException | UserAlreadyExists | InvalidPassword e) {
             System.out.println(e.getMessage());
         } catch (RemoteException | NotBoundException e2) {

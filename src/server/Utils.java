@@ -15,7 +15,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 
 public class Utils {
@@ -138,7 +137,7 @@ public class Utils {
         System.out.println(toPrint);
     }
 
-    public static void printListaAmici(ConcurrentHashMap<String, String> ls) {
+    public static void printListaAmici(HashMap<String, String> ls) {
         if (ls == null) return;
 
         Iterator it = ls.values().iterator();

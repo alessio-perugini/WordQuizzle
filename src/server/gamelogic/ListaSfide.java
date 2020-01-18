@@ -1,5 +1,6 @@
 package server.gamelogic;
 
+import errori.SfidaAlreadyExists;
 import errori.UserDoesntExists;
 
 import java.util.concurrent.ConcurrentHashMap;
@@ -25,7 +26,8 @@ public class ListaSfide {
 
     public synchronized Sfida addSfida(Sfida sfida) {
         if (sfida == null) throw new IllegalArgumentException();
-        //TODO controllare sfide duplicate ?
+        if (!hashListaSfide.isEmpty() && hashListaSfide.get(sfida.getIdSfida()) != null)
+            throw new SfidaAlreadyExists("La sfida è già stata aggiunta");
 
         return hashListaSfide.putIfAbsent(sfida.getIdSfida(), sfida);
     }
@@ -33,7 +35,7 @@ public class ListaSfide {
     public synchronized void removeSfida(Sfida sfida) {
         if (sfida == null) throw new IllegalArgumentException();
         if (hashListaSfide.isEmpty()) throw new UserDoesntExists();
-        //TODO sistemare
+
         hashListaSfide.remove(sfida);
     }
 

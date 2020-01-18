@@ -15,5 +15,6 @@ public class Settings {
     public static final int MIN_PAROLE_DA_GENERARE = 3;
     public static final int PUNTI_EXTRA = 3; //Z
     public static final boolean AUTO_SAVE_JSON = false;
-
+    public static final int READ_BYTE_BUFFER_SIZE = 1024;
+    public static final int WRITE_BYTE_BUFFER_SIZE = 1024;
 }

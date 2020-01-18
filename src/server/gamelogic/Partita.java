@@ -26,13 +26,13 @@ public class Partita implements Runnable {
         return finita;
     }
 
-    public boolean finita;
+    public boolean finita; //Se la partita è conclusa
 
     public Timestamp getFinePartita() {
         return finePartita;
     }
 
-    public Timestamp finePartita;
+    public Timestamp finePartita; //Quando deve finire la partita
     private ArrayList<HashMap<String, String>> paroleDaIndovinare;
     private int paroleTotali;
     private int sbagliate;
@@ -72,7 +72,7 @@ public class Partita implements Runnable {
                 sendResponseToClient((i == 0) ? prefix + sendChallenge : sendChallenge);
                 String parolaTradotta = readResponse();
 
-                if (!Utils.isGivenTimeExpired(this.finePartita)) {
+                if (!Utils.isGivenTimeExpired(this.finePartita)) { //Se il tempo è scaduto non considera l'ultima read
                     if (parolaTradotta.equals(traduzioneGiusta.toLowerCase())) {
                         this.corrette++;
                     } else {
@@ -83,7 +83,7 @@ public class Partita implements Runnable {
 
             this.nonRisposte = this.paroleTotali - i;
             this.punteggioPartita = (this.corrette * 2) - this.sbagliate;
-            user.addPunteggioPartita(this.punteggioPartita);
+            user.addPunteggioPartita(this.punteggioPartita); //Aggiungi il punteggio all'utente
 
             String esitoPartita = String.format("Hai tradotto correttamente %d parole, ne hai sbagliate %d e non risposta a %d.\nHai totalizzato %d punti.", this.corrette, this.sbagliate, this.nonRisposte, this.punteggioPartita);
             sendResponseToClient(esitoPartita);
@@ -97,9 +97,9 @@ public class Partita implements Runnable {
 
     private String readResponse() throws IOException {
         if (client == null) throw new NullPointerException();
-        ByteBuffer msg = ByteBuffer.allocate(1024);
+        ByteBuffer msg = ByteBuffer.allocate(Settings.READ_BYTE_BUFFER_SIZE);
         long byteLeft;
-        do {
+        do {//finchè non legge la risposta dal client
             byteLeft = client.read(msg);
             if (byteLeft == -1) throw new IOException();
         } while (byteLeft == 0);
@@ -110,7 +110,7 @@ public class Partita implements Runnable {
         if (testo == null) throw new IllegalArgumentException();
         if (client == null) throw new NullPointerException();
 
-        try {
+        try {//Invia la risposta al client
             client.write(ByteBuffer.wrap((testo + "\n").getBytes(StandardCharsets.UTF_8)));
         } catch (IOError | IOException ecc) {
             ecc.printStackTrace();
