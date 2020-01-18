@@ -2,7 +2,6 @@ package client;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import errori.UserAlreadyExists;
 import errori.UserAlreadyLoggedIn;
 import server.Settings;
 import server.Utente;
@@ -97,7 +96,7 @@ public class Main {
                                 try {
                                     write(currToken, client);
                                     String srvResp = read(client);
-                                    if (srvResp.contains("Parole corrette:")) {
+                                    if (srvResp.contains("Hai tradotto correttamente")) {
                                         read(client);//mi metto in lettura per dirmi se ho vinto o perso!
                                         sonoInPartita = false;
                                     }
@@ -129,6 +128,7 @@ public class Main {
             ex.printStackTrace();
         }
         try {
+            udpSrv.quit();
             thUdpManager.interrupt();
         } catch (Exception e) {
             e.printStackTrace();
@@ -175,7 +175,7 @@ public class Main {
             RmiClient rmiReg = new RmiClient();
             String nickname = tokenizedLine.nextToken();
             String pw = tokenizedLine.nextToken();
-            if(rmiReg.registra_utente(nickname, pw)) System.out.println("Registrazione effettuata!");
+            if (rmiReg.registra_utente(nickname, pw)) System.out.println("Registrazione effettuata!");
         } catch (NoSuchElementException e) {
             System.out.println("registra_utente <nickUtente > <password >");
         }
@@ -294,11 +294,6 @@ public class Main {
     public static String scriviLeggi(String messaggio, SocketChannel client) {
         try {
             messaggio += "\n";
-            ByteBuffer length = ByteBuffer.allocate(Integer.BYTES);
-            length.putInt(messaggio.length());
-            length.flip();
-            client.write(length);
-            length.clear();
             client.write(ByteBuffer.wrap(messaggio.getBytes(StandardCharsets.UTF_8)));
 
             ByteBuffer buffer = ByteBuffer.allocate(1024);

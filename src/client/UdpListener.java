@@ -12,6 +12,7 @@ public class UdpListener implements Runnable {
     private int udpPort;
     private RichiestaSfida richiestaSfida;
     public AtomicBoolean sfidaAnswered;
+    private DatagramSocket server;
 
     public void setRispostaSfida(String rispostaSfida) {
         this.sfidaAnswered.set(true);
@@ -27,15 +28,18 @@ public class UdpListener implements Runnable {
         this.sfidaAnswered = new AtomicBoolean(false);
     }
 
+    public void quit() {
+        if (server != null) server.close();
+    }
+
     @Override
     public void run() {
         byte[] buffer = new byte[100];
 
         DatagramPacket rcvPacket = new DatagramPacket(buffer, buffer.length);
         //TODO check udp port
-        try (DatagramSocket server = new DatagramSocket(udpPort, InetAddress.getByName(Settings.HOST_NAME))) {
-            System.out.println("Server up!");
-
+        try {
+            server = new DatagramSocket(udpPort, InetAddress.getByName(Settings.HOST_NAME));
             while (!Thread.currentThread().isInterrupted()) {
                 server.receive(rcvPacket);
 
@@ -43,7 +47,9 @@ public class UdpListener implements Runnable {
                 System.out.println(msg.trim() + " ti vuole sfidare accetti (si/no): ");
                 richiestaSfida.setSfidaToAnswer(new AtomicBoolean(true));
 
-                while (!this.sfidaAnswered.get()) ; //Aspetto fino a che non mi da una risposta
+                while (!Thread.currentThread().isInterrupted() && !this.sfidaAnswered.get())
+                    ; //Aspetto fino a che non mi da una risposta
+                if (Thread.currentThread().isInterrupted()) return;
 
                 String risposta = this.rispostaSfida;
                 if (this.sfidaAnswered.get() && (risposta.equals("si") || risposta.equals("no"))) {
@@ -57,10 +63,9 @@ public class UdpListener implements Runnable {
                 }
 
                 richiestaSfida.setSfidaToAnswer(new AtomicBoolean(false));
-
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            //e.printStackTrace();
         }
     }
 }

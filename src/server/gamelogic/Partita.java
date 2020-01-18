@@ -68,12 +68,12 @@ public class Partita implements Runnable {
     public void run() {
         try {
             int i = 0;
-
+            String prefix = String.format("Via alla sfida di traduzione!\nAvete %d secondi per tradurre correttamente %d parole.\n", Settings.DURATA_PARTITA_SEC, this.paroleTotali);
             do {
                 String parolaDaTradurre = ((String) paroleDaIndovinare.get(i).keySet().toArray()[0]);
                 String traduzioneGiusta = paroleDaIndovinare.get(i).get(parolaDaTradurre);
                 String sendChallenge = String.format("Challenge %d/%d: %s", i + 1, this.paroleTotali, parolaDaTradurre);
-                sendResponseToClient(sendChallenge);
+                sendResponseToClient((i == 0) ? prefix + sendChallenge : sendChallenge);
                 String parolaTradotta = readResponse();
 
                 if (!Utils.isGivenTimeExpired(this.finePartita)) {
@@ -89,7 +89,7 @@ public class Partita implements Runnable {
             this.punteggioPartita = (this.corrette * 2) - this.sbagliate;
             user.addPunteggioPartita(this.punteggioPartita);
 
-            String esitoPartita = String.format("Parole corrette: %d\n Parole errate: %d\n Parole non risposte: %d\n", this.corrette, this.sbagliate, this.nonRisposte);
+            String esitoPartita = String.format("Hai tradotto correttamente %d parole, ne hai sbagliate %d e non risposta a %d.\nHai totalizzato %d punti.", this.corrette, this.sbagliate, this.nonRisposte, this.punteggioPartita);
             sendResponseToClient(esitoPartita);
             this.finita = true;
         } catch (Exception ecc) {

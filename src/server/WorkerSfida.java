@@ -29,11 +29,13 @@ public class WorkerSfida implements Runnable {
                 //if(!(Utils.isGivenTimeExpired(p1.getFinePartita()) && Utils.isGivenTimeExpired(p2.getFinePartita()))) continue;
                 Utils.log("/!\\ Invio messaggio fine partita");
                 if (p1.getPunteggioPartita() > p2.getPunteggioPartita()) {//vince p1
-                    p1.sendResponseToClient(String.format("Hai vinto con %s punti! %s ha totalizzato %s punti.", p1.getPunteggioPartita(), p2.getUser().getNickname(), p2.getPunteggioPartita()));
-                    p2.sendResponseToClient(String.format("Hai perso con %s punti! %s ha totalizzato %s punti.", p2.getPunteggioPartita(), p1.getUser().getNickname(), p1.getPunteggioPartita()));
+                    p1.getUser().addPunteggioPartita(Settings.PUNTI_EXTRA);
+                    p1.sendResponseToClient(String.format("Congratulazioni, hai vinto! Hai guadagnato %s punti extra, per un totale di %d punti!", Settings.PUNTI_EXTRA, p1.getPunteggioPartita() + Settings.PUNTI_EXTRA));
+                    p2.sendResponseToClient(String.format("Hai perso! Hai totalizzato %d punti!", p2.getPunteggioPartita()));
                 } else if (p1.getPunteggioPartita() < p2.getPunteggioPartita()) {//vince p2
-                    p1.sendResponseToClient(String.format("Hai perso con %s punti! %s ha totalizzato %s punti.", p1.getPunteggioPartita(), p2.getUser().getNickname(), p2.getPunteggioPartita()));
-                    p2.sendResponseToClient(String.format("Hai vinto con %s punti! %s ha totalizzato %s punti.", p2.getPunteggioPartita(), p1.getUser().getNickname(), p1.getPunteggioPartita()));
+                    p2.getUser().addPunteggioPartita(Settings.PUNTI_EXTRA);
+                    p1.sendResponseToClient(String.format("Hai perso! Hai totalizzato %d punti!", p1.getPunteggioPartita()));
+                    p2.sendResponseToClient(String.format("Congratulazioni, hai vinto! Hai guadagnato %s punti extra, per un totale di %d punti!", Settings.PUNTI_EXTRA, p2.getPunteggioPartita() + Settings.PUNTI_EXTRA));
                 } else {//pareggiano
                     String pareggio = String.format("Hai pareggiato con %s punti!", p1.getPunteggioPartita());
                     p1.sendResponseToClient(pareggio);

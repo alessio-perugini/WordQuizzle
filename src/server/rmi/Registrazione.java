@@ -21,7 +21,8 @@ public class Registrazione extends RemoteServer implements RegistrazioneService 
         if (nickName == null || nickName.length() == 0) throw new IllegalArgumentException("nickname non valido");
         if (password == null || password.length() < 6) throw new InvalidPassword("Password non valida");
         Utente user = new Utente(nickName, password);
-        if( this.lsUtenti.addUtente(user) != null) throw new UserAlreadyExists("Il nickname già inserito è stato preso");
-        return  true;
+        if (this.lsUtenti.addUtente(user) != null)
+            throw new UserAlreadyExists("Il nickname già inserito è stato preso");
+        return true;
     }
 }

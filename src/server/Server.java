@@ -25,7 +25,7 @@ public class Server {
     SocketChannel socChanClient;
     ServerSocketChannel serverSckChnl;
 
-    public void start() { //TODO gestire eccezione
+    public void start() {
         try {
             ex = Executors.newFixedThreadPool(Settings.N_THREADS_THREAD_POOL);
             serverSckChnl = ServerSocketChannel.open();
@@ -74,7 +74,7 @@ public class Server {
     }
 
     public void crashClient(Utente uCrash) {
-        if(uCrash != null && uCrash.getNickname() != null){
+        if (uCrash != null && uCrash.getNickname() != null) {
             ListaUtenti.getInstance().setConnected(uCrash.getNickname(), false); //Se crasha lo disconnette
             Utils.log("crashato/connessione chiusa " + uCrash.getNickname(), uCrash);
         }
@@ -84,9 +84,8 @@ public class Server {
         SocketChannel client = serverSckChnl.accept();
         client.configureBlocking(false);
         SelectionKey sk = client.register(selector, SelectionKey.OP_READ);
-        ByteBuffer length = ByteBuffer.allocate(Integer.BYTES);
         ByteBuffer msg = ByteBuffer.allocate(1024);
-        ByteBuffer[] bfs = {length, msg};
+        ByteBuffer[] bfs = {msg};
         socUser = new Utente(sk);
         Object[] objClient = {bfs, socUser};
         sk.attach(objClient);
@@ -102,9 +101,8 @@ public class Server {
 
         if (!respBuf.hasRemaining()) {
             respBuf.clear();
-            ByteBuffer length = ByteBuffer.allocate(Integer.BYTES);
             ByteBuffer msg = ByteBuffer.allocate(1024);
-            ByteBuffer[] bfs = {length, msg};
+            ByteBuffer[] bfs = {msg};
             Object[] objClient = {bfs, this.socUser};
             socChanClient.register(selector, SelectionKey.OP_READ, objClient);
         }
@@ -116,26 +114,19 @@ public class Server {
         ByteBuffer[] bfs = (ByteBuffer[]) objClient[0];
         long byteLeft = socChanClient.read(bfs);
         if (byteLeft == -1) throw new IOException();
-
+        ByteBuffer msgBuf = bfs[0];
         byte[] bytes;
-        ByteBuffer msgBuf = bfs[1];
-        bfs[0].flip();
-        int l = 0;
-        if (bfs[0].hasRemaining()) {
-            l = bfs[0].getInt();
-        }
 
         StringBuilder message = new StringBuilder();
 
-        while (byteLeft > 0) { //TODO da fixare
-            msgBuf.flip();
-            bytes = new byte[msgBuf.remaining()];
-            msgBuf.get(bytes);
-            message.append(new String(bytes));
-            msgBuf.clear();
-            byteLeft = socChanClient.read(msgBuf);
-            if (byteLeft == -1) throw new IOException();
-        }
+        msgBuf.flip();
+        bytes = new byte[msgBuf.remaining()];
+        msgBuf.get(bytes);
+        message.append(new String(bytes));
+        msgBuf.clear();
+        byteLeft = socChanClient.read(msgBuf);
+        if (byteLeft == -1) throw new IOException();
+
         this.socUser = (Utente) objClient[1];
 
         if (!message.toString().isEmpty()) messageParser(message.toString());

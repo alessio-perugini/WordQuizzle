@@ -67,10 +67,9 @@ public class Utils {
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             System.out.println("/!\\ Shutdown hook ran! /!\\");
-            ex.shutdown();
-            while (!ex.isTerminated()) ;
-
             thread.interrupt();
+            ex.shutdownNow();
+            while (!ex.isTerminated()) ;
 
             Storage.writeObjectToJSONFile(Settings.JSON_FILENAME, ListaUtenti.getInstance().getHashListaUtenti());
             Utils.log("LOG: Salvataggio completato.");

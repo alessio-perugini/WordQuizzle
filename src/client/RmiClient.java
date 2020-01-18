@@ -21,9 +21,9 @@ public class RmiClient {
             remoteObject = r.lookup("REGISTRAZIONE-SERVER");
             serverObject = (RegistrazioneService) remoteObject;
             return serverObject.registra_utente(username, pw);
-        }catch (IllegalArgumentException | UserAlreadyExists | InvalidPassword e){
+        } catch (IllegalArgumentException | UserAlreadyExists | InvalidPassword e) {
             System.out.println(e.getMessage());
-        }catch (RemoteException | NotBoundException e2){
+        } catch (RemoteException | NotBoundException e2) {
             e2.printStackTrace();
         }
         return false;
