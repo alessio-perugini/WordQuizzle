@@ -2,6 +2,7 @@ package server.MyMemoryAPI;
 
 import java.util.*;
 import java.io.IOException;
+
 import com.fasterxml.jackson.core.*;
 import com.fasterxml.jackson.databind.*;
 import com.fasterxml.jackson.databind.annotation.*;
@@ -17,14 +18,15 @@ public class Subject {
         public Subject deserialize(JsonParser jsonParser, DeserializationContext deserializationContext) throws IOException, JsonProcessingException {
             Subject value = new Subject();
             switch (jsonParser.getCurrentToken()) {
-            case VALUE_TRUE:
-            case VALUE_FALSE:
-                value.boolValue = jsonParser.readValueAs(Boolean.class);
-                break;
-            case VALUE_STRING:
-                value.stringValue = jsonParser.readValueAs(String.class);
-                break;
-            default: throw new IOException("Cannot deserialize Subject");
+                case VALUE_TRUE:
+                case VALUE_FALSE:
+                    value.boolValue = jsonParser.readValueAs(Boolean.class);
+                    break;
+                case VALUE_STRING:
+                    value.stringValue = jsonParser.readValueAs(String.class);
+                    break;
+                default:
+                    throw new IOException("Cannot deserialize Subject");
             }
             return value;
         }

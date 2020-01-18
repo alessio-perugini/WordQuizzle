@@ -13,20 +13,20 @@ public class Registrazione extends RemoteServer implements RegistrazioneService 
 
     private ListaUtenti lsUtenti;
 
-    public Registrazione(){
+    public Registrazione() {
         lsUtenti = ListaUtenti.getInstance();
     }
 
     @Override
     public boolean registra_utente(String nickName, String password) throws RemoteException, IllegalArgumentException, UserAlreadyExists {
-        if(nickName == null || nickName.length() == 0) throw new IllegalArgumentException("nickname non valido");
-        if(password == null || password.length() < 6) throw new InvalidPassword("Password non valida");
+        if (nickName == null || nickName.length() == 0) throw new IllegalArgumentException("nickname non valido");
+        if (password == null || password.length() < 6) throw new InvalidPassword("Password non valida");
 
         Utente user = new Utente(nickName, password);
         //TODO da cambiare che ritorna una string
-        try{
+        try {
             return this.lsUtenti.addUtente(user) == null;
-        }catch (Exception ecc){
+        } catch (Exception ecc) {
             ecc.printStackTrace();
             return false;
         }

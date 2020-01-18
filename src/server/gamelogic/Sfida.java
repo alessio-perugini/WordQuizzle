@@ -41,27 +41,29 @@ public class Sfida {
         this.partitaSfidato = partitaSfidato;
     }
 
-    public Sfida(Utente userSfidante, Utente userSfidato){
-        if(userSfidante == null || userSfidato == null) throw new IllegalArgumentException();
+    public Sfida(Utente userSfidante, Utente userSfidato) {
+        if (userSfidante == null || userSfidato == null) throw new IllegalArgumentException();
 
         Random rand = new Random();
         this.idSfida = userSfidante.hashCode() + rand.nextInt();
-        this.K_paroleDaInviare =  rand.nextInt(20);//TODO da sistemare
+        this.K_paroleDaInviare = rand.nextInt(20);//TODO da sistemare
         this.paroleDaIndovinare = Dizionario.getInstance().getNwordsFromDictionary(K_paroleDaInviare);
         this.userSfidante = userSfidante;
         this.userSfidato = userSfidato;
         this.traduzioniGenerate = new AtomicBoolean(false);
     }
 
-    public void generaTraduzioni(){
-        if(this.userSfidante == null || this.userSfidato == null) throw new IllegalArgumentException("L'amico non ha ancora accettato la sfida");
+    public void generaTraduzioni() {
+        if (this.userSfidante == null || this.userSfidato == null)
+            throw new IllegalArgumentException("L'amico non ha ancora accettato la sfida");
+        if (traduzioniGenerate.get()) return;
 
-        for(Iterator<HashMap<String, String>> elm = this.paroleDaIndovinare.iterator(); elm.hasNext();){
+        for (Iterator<HashMap<String, String>> elm = this.paroleDaIndovinare.iterator(); elm.hasNext(); ) {
             try {
                 HashMap<String, String> elemento = elm.next();
                 Object[] keys = elemento.keySet().toArray();
-                elemento.replace((String)keys[0], Utils.sendHttpRequest((String)keys[0]));
-            }catch(IOException e){
+                elemento.replace((String) keys[0], Utils.sendHttpRequest((String) keys[0]));
+            } catch (IOException e) {
                 e.printStackTrace();
             }
         }

@@ -20,6 +20,7 @@ import static java.util.concurrent.TimeUnit.*;
 
 public class Utils {
     private static final int MAX_PORT_NUM = 65535;
+
     public static String getParamsString(Map<String, String> params) throws UnsupportedEncodingException {
         StringBuilder result = new StringBuilder();
 
@@ -52,14 +53,14 @@ public class Utils {
         return getFullResponse(con);
     }
 
-    public static void SalvaSuFileHandleSIGTERM(ExecutorService ex){
+    public static void SalvaSuFileHandleSIGTERM(ExecutorService ex) {
         Thread thread = new Thread(new Thread(() -> {
-            try{
+            try {
                 Thread.sleep(20000);
                 System.out.println("/!\\ LOG: Salvataggio automatico in corso...");
                 Storage.writeObjectToJSONFile(Settings.JSON_FILENAME, ListaUtenti.getInstance().getHashListaUtenti());
                 System.out.println("/!\\ LOG: Salvataggio completato.");
-            }catch (InterruptedException e){
+            } catch (InterruptedException e) {
                 e.printStackTrace();
             }
         }));
@@ -70,12 +71,13 @@ public class Utils {
             System.out.println("/!\\ Shutdown hook ran! /!\\");
             ex.shutdownNow();
             ex.shutdown();
-            while(!ex.isTerminated()){}
+            while (!ex.isTerminated()) {
+            }
 
-            try{
+            try {
                 thread.join();
                 thread.interrupt();
-            }catch (InterruptedException ecc){
+            } catch (InterruptedException ecc) {
                 System.out.println("Interrupt ricevuto " + ecc.getMessage());
             }
             Storage.writeObjectToJSONFile(Settings.JSON_FILENAME, ListaUtenti.getInstance().getHashListaUtenti());
@@ -105,12 +107,12 @@ public class Utils {
         return data.getResponseData().getTranslatedText();
     }
 
-    public static void printDizionarioDellaSfida(Sfida objSfida){
+    public static void printDizionarioDellaSfida(Sfida objSfida) {
         objSfida.generaTraduzioni();
-        for(Iterator<HashMap<String, String>> elm = objSfida.getParoleDaIndovinare().iterator(); elm.hasNext();){
+        for (Iterator<HashMap<String, String>> elm = objSfida.getParoleDaIndovinare().iterator(); elm.hasNext(); ) {
             HashMap<String, String> words = elm.next();
-            Object[] keySet = (Object[])words.keySet().toArray();
-            System.out.println((String)keySet[0] + " -> " + words.get(keySet[0]));
+            Object[] keySet = (Object[]) words.keySet().toArray();
+            System.out.println((String) keySet[0] + " -> " + words.get(keySet[0]));
         }
     }
 
@@ -132,11 +134,11 @@ public class Utils {
         return false;
     }
 
-    public static Timestamp addSecondsToATimeStamp(Timestamp start, int sec){
+    public static Timestamp addSecondsToATimeStamp(Timestamp start, int sec) {
         return new Timestamp(start.getTime() + (sec * 1000L));
     }
 
-    public static boolean isGivenTimeExpired(Timestamp end){
+    public static boolean isGivenTimeExpired(Timestamp end) {
         Timestamp now = new Timestamp(System.currentTimeMillis());
         return end.before(now);
     }

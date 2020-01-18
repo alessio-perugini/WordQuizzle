@@ -1,11 +1,11 @@
 package errori;
 
 public class UserDoesntExists extends RuntimeException {
-    public UserDoesntExists(){
+    public UserDoesntExists() {
 
     }
 
-    public UserDoesntExists(String ecc){
+    public UserDoesntExists(String ecc) {
         super(ecc);
     }
 }

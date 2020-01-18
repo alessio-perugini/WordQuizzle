@@ -10,18 +10,18 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 
 public class RmiClient {
-    public boolean registra_utente(String username, String pw){
+    public boolean registra_utente(String username, String pw) {
         Remote remoteObject;
         RegistrazioneService serverObject;
 
-        try{
+        try {
             Registry r = LocateRegistry.getRegistry(Settings.RMI_PORT);
             remoteObject = r.lookup("REGISTRAZIONE-SERVER");
             serverObject = (RegistrazioneService) remoteObject;
             return serverObject.registra_utente(username, pw);
-        }catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
         }
-        return  false;
+        return false;
     }
 }

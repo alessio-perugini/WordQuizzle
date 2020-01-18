@@ -7,8 +7,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class RichiestaSfida {
     private static RichiestaSfida instance;
 
-    public static synchronized RichiestaSfida getInstance(){
-        if(instance == null) instance = new RichiestaSfida();
+    public static synchronized RichiestaSfida getInstance() {
+        if (instance == null) instance = new RichiestaSfida();
         return instance;
     }
 
@@ -22,7 +22,7 @@ public class RichiestaSfida {
 
     public AtomicBoolean sfidaAnswered;
 
-    private RichiestaSfida(){
+    private RichiestaSfida() {
         sfidaAnswered = new AtomicBoolean(false);
     }
 }

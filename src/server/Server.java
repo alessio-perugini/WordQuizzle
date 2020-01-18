@@ -17,6 +17,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class Server {
     private Utente socUser;
@@ -68,7 +69,7 @@ public class Server {
     }
 
     public void crashClient() {
-        if (socUser != null && socUser.getNickname() != null){
+        if (socUser != null && socUser.getNickname() != null) {
             System.out.println(socUser.getNickname() + " è crashato!");
             ListaUtenti.getInstance().setConnected(socUser.getNickname(), false); //Se crasha lo disconnette
         }
@@ -110,7 +111,7 @@ public class Server {
         Object[] objClient = (Object[]) key.attachment();
         ByteBuffer[] bfs = (ByteBuffer[]) objClient[0];
         long byteLeft = socChanClient.read(bfs);
-        if(byteLeft == -1) throw new IOException();
+        if (byteLeft == -1) throw new IOException();
 
         byte[] bytes;
         ByteBuffer msgBuf = bfs[1];
@@ -126,7 +127,7 @@ public class Server {
             message.append(new String(bytes));
             msgBuf.clear();
             byteLeft = socChanClient.read(msgBuf);
-            if(byteLeft == -1) throw new IOException();
+            if (byteLeft == -1) throw new IOException();
         }
 
         this.socUser = (Utente) objClient[1];
@@ -136,6 +137,8 @@ public class Server {
     public void messageParser(String message) throws ClosedChannelException {
         StringTokenizer tokenizedLine = new StringTokenizer(message);
         String pw, nickUtente, nickAmico;
+        if (socUser.getInPartita().get()) return; //se è in partita ignora le richieste di altri comandi!
+
         try {
             switch (tokenizedLine.nextToken()) {
                 case "LOGIN":
@@ -184,6 +187,9 @@ public class Server {
                         sfida(nickUtente, nickAmico);
                     } catch (Exception e) {
                         e.printStackTrace();
+                        if (socUser.getInPartita().get()) socUser.setInPartita(new AtomicBoolean(false));
+                        Utente amico = ListaUtenti.getInstance().getUser(nickAmico);
+                        if (amico != null && amico.getInPartita().get()) amico.setInPartita(new AtomicBoolean(false));
                         sendResponseToClient(e.getMessage());
                     }
                     break;
@@ -277,7 +283,11 @@ public class Server {
             throw new FriendNotFound("L'utente che vuoi sfidare non è nella tua lista amici");
         Utente amico = ListaUtenti.getInstance().getUser(nickAmico);
         if (amico != null && !amico.isConnesso()) throw new FriendNotConnected("L'amico non è connesso");
+        if (amico.getInPartita().get()) throw new FriendIsAlreadyPlaying("L'amico è già in una partita");
+
         //TODO gestire le IOEXC dei thread per lanciare un custom err
+
+        profiloUtente.setInPartita(new AtomicBoolean(true));
 
         DatagramSocket udpClient = new DatagramSocket();
         udpClient.setSoTimeout(Settings.UDP_TIMEOUT);
@@ -302,19 +312,23 @@ public class Server {
 
         udpClient.close();
 
-        if (msg.equals("no")) throw new SfidaRequestRefused("Ha rifiutato la sfida");
+        if (msg.equals("no")) {
+            profiloUtente.setInPartita(new AtomicBoolean(false));
+            throw new SfidaRequestRefused("Ha rifiutato la sfida");
+        }
         //sendResponseToClient(nickAmico + " ha accettato la sfida!");
         socChanClient.write(ByteBuffer.wrap((nickAmico + " ha accettato la sfida!" + "\n").getBytes(StandardCharsets.UTF_8)));
         System.out.println("Sfida accettata");
 
+        amico.setInPartita(new AtomicBoolean(true));
         Sfida objSfida = new Sfida(profiloUtente, amico);
-        ListaSfide sfide = ListaSfide.getInstance();
-        sfide.addSfida(objSfida);
-
-        Partita p1 = new Partita(profiloUtente, objSfida);
-        Partita p2 = new Partita(amico, objSfida);
-        ex.execute(p1);
-        ex.execute(p2);
+        Partita partitaSfidante = new Partita(profiloUtente, objSfida);
+        Partita partitaAmico = new Partita(amico, objSfida);
+        ListaSfide.getInstance().addSfida(objSfida);
+        objSfida.setPartitaSfidante(partitaSfidante);
+        objSfida.setPartitaSfidato(partitaAmico);
+        ex.execute(partitaSfidante);
+        ex.execute(partitaAmico);
         //TODO vedere se creare un thread che fa pooling sulla struttura dati
     }
 

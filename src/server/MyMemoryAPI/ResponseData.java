@@ -1,6 +1,7 @@
 package server.MyMemoryAPI;
 
 import java.util.*;
+
 import com.fasterxml.jackson.annotation.*;
 
 public class ResponseData {
@@ -8,12 +9,22 @@ public class ResponseData {
     private double match;
 
     @JsonProperty("translatedText")
-    public String getTranslatedText() { return translatedText; }
+    public String getTranslatedText() {
+        return translatedText;
+    }
+
     @JsonProperty("translatedText")
-    public void setTranslatedText(String value) { this.translatedText = value; }
+    public void setTranslatedText(String value) {
+        this.translatedText = value;
+    }
 
     @JsonProperty("match")
-    public double getMatch() { return match; }
+    public double getMatch() {
+        return match;
+    }
+
     @JsonProperty("match")
-    public void setMatch(double value) { this.match = value; }
+    public void setMatch(double value) {
+        this.match = value;
+    }
 }

@@ -9,8 +9,8 @@ import java.rmi.server.UnicastRemoteObject;
 
 public class RegistrazioneServer {
 
-    public void start(){
-        try{
+    public void start() {
+        try {
             Registrazione reg = new Registrazione();
             RegistrazioneService stub = (RegistrazioneService) UnicastRemoteObject.exportObject(reg, 0);
 
@@ -22,7 +22,7 @@ public class RegistrazioneServer {
             r.rebind("REGISTRAZIONE-SERVER", stub);
 
             System.out.println("RMI registrazione ready!");
-        }catch (RemoteException e){
+        } catch (RemoteException e) {
             e.printStackTrace();
         }
     }

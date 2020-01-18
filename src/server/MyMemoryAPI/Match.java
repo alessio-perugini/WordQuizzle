@@ -1,6 +1,7 @@
 package server.MyMemoryAPI;
 
 import java.util.*;
+
 import com.fasterxml.jackson.annotation.*;
 
 public class Match {
@@ -19,67 +20,132 @@ public class Match {
     private String model;
 
     @JsonProperty("id")
-    public ID getID() { return id; }
+    public ID getID() {
+        return id;
+    }
+
     @JsonProperty("id")
-    public void setID(ID value) { this.id = value; }
+    public void setID(ID value) {
+        this.id = value;
+    }
 
     @JsonProperty("segment")
-    public String getSegment() { return segment; }
+    public String getSegment() {
+        return segment;
+    }
+
     @JsonProperty("segment")
-    public void setSegment(String value) { this.segment = value; }
+    public void setSegment(String value) {
+        this.segment = value;
+    }
 
     @JsonProperty("translation")
-    public String getTranslation() { return translation; }
+    public String getTranslation() {
+        return translation;
+    }
+
     @JsonProperty("translation")
-    public void setTranslation(String value) { this.translation = value; }
+    public void setTranslation(String value) {
+        this.translation = value;
+    }
 
     @JsonProperty("quality")
-    public ID getQuality() { return quality; }
+    public ID getQuality() {
+        return quality;
+    }
+
     @JsonProperty("quality")
-    public void setQuality(ID value) { this.quality = value; }
+    public void setQuality(ID value) {
+        this.quality = value;
+    }
 
     @JsonProperty("reference")
-    public String getReference() { return reference; }
+    public String getReference() {
+        return reference;
+    }
+
     @JsonProperty("reference")
-    public void setReference(String value) { this.reference = value; }
+    public void setReference(String value) {
+        this.reference = value;
+    }
 
     @JsonProperty("usage-count")
-    public long getUsageCount() { return usageCount; }
+    public long getUsageCount() {
+        return usageCount;
+    }
+
     @JsonProperty("usage-count")
-    public void setUsageCount(long value) { this.usageCount = value; }
+    public void setUsageCount(long value) {
+        this.usageCount = value;
+    }
 
     @JsonProperty("subject")
-    public Subject getSubject() { return subject; }
+    public Subject getSubject() {
+        return subject;
+    }
+
     @JsonProperty("subject")
-    public void setSubject(Subject value) { this.subject = value; }
+    public void setSubject(Subject value) {
+        this.subject = value;
+    }
 
     @JsonProperty("created-by")
-    public String getCreatedBy() { return createdBy; }
+    public String getCreatedBy() {
+        return createdBy;
+    }
+
     @JsonProperty("created-by")
-    public void setCreatedBy(String value) { this.createdBy = value; }
+    public void setCreatedBy(String value) {
+        this.createdBy = value;
+    }
 
     @JsonProperty("last-updated-by")
-    public String getLastUpdatedBy() { return lastUpdatedBy; }
+    public String getLastUpdatedBy() {
+        return lastUpdatedBy;
+    }
+
     @JsonProperty("last-updated-by")
-    public void setLastUpdatedBy(String value) { this.lastUpdatedBy = value; }
+    public void setLastUpdatedBy(String value) {
+        this.lastUpdatedBy = value;
+    }
 
     @JsonProperty("create-date")
-    public String getCreateDate() { return createDate; }
+    public String getCreateDate() {
+        return createDate;
+    }
+
     @JsonProperty("create-date")
-    public void setCreateDate(String value) { this.createDate = value; }
+    public void setCreateDate(String value) {
+        this.createDate = value;
+    }
 
     @JsonProperty("last-update-date")
-    public String getLastUpdateDate() { return lastUpdateDate; }
+    public String getLastUpdateDate() {
+        return lastUpdateDate;
+    }
+
     @JsonProperty("last-update-date")
-    public void setLastUpdateDate(String value) { this.lastUpdateDate = value; }
+    public void setLastUpdateDate(String value) {
+        this.lastUpdateDate = value;
+    }
 
     @JsonProperty("match")
-    public double getMatch() { return match; }
+    public double getMatch() {
+        return match;
+    }
+
     @JsonProperty("match")
-    public void setMatch(double value) { this.match = value; }
+    public void setMatch(double value) {
+        this.match = value;
+    }
 
     @JsonProperty("model")
-    public String getModel() { return model; }
+    public String getModel() {
+        return model;
+    }
+
     @JsonProperty("model")
-    public void setModel(String value) { this.model = value; }
+    public void setModel(String value) {
+        this.model = value;
+    }
 }

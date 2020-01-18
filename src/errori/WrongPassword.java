@@ -1,11 +1,11 @@
 package errori;
 
 public class WrongPassword extends RuntimeException {
-    public WrongPassword(){
+    public WrongPassword() {
 
     }
 
-    public WrongPassword(String ecc){
+    public WrongPassword(String ecc) {
         super(ecc);
     }
 }

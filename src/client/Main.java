@@ -23,7 +23,7 @@ public class Main {
     static Utente profiloLoggato = null;
     static final BufferedReader consoleRdr = new BufferedReader(new InputStreamReader(System.in));
     static RichiestaSfida reqSfida = RichiestaSfida.getInstance();
-    static  boolean sonoInPartita = false;
+    static boolean sonoInPartita = false;
 
     public static void main(String[] args) {
         udpPort = (args.length > 0) ? Integer.parseInt(args[0]) : 50001;
@@ -103,29 +103,29 @@ public class Main {
                             read(client);
                             break;
                         default:
-                            if(sonoInPartita){
+                            if (sonoInPartita) {
                                 try {
                                     write(currToken, client);
                                     String srvResp = read(client);
-                                    if(srvResp.contains("Parole corrette:")){
+                                    if (srvResp.contains("Parole corrette:")) {
                                         sonoInPartita = false;
                                     }
                                 } catch (Exception e) {
                                     e.printStackTrace();
                                 }
-                            }else{
-                                if(reqSfida.getSfidaAnswered().get()){
-                                    if(currToken.equals("si")){
+                            } else {
+                                if (reqSfida.getSfidaAnswered().get()) {
+                                    if (currToken.equals("si")) {
                                         udpSrv.sfidaAnswered.set(true);
                                         udpSrv.setRispostaSfida("si");
                                         sonoInPartita = true;
                                         read(client);//printa la prima parola da indovinare
-                                    }else if (currToken.equals("no")){
+                                    } else if (currToken.equals("no")) {
                                         udpSrv.sfidaAnswered.set(false);
                                         udpSrv.setRispostaSfida("no");
                                         sonoInPartita = false; //TODO creare una funzione dove prende la read della console
                                     }
-                                }else{
+                                } else {
                                     System.out.println("Comando non trovato, per la lista di comanda digitare (--help)");
                                 }
                             }
@@ -153,7 +153,8 @@ public class Main {
             String nick = tokenizedLine.nextToken();
             String password = tokenizedLine.nextToken();
 
-            if (profiloLoggato != null && profiloLoggato.getNickname().equals(nick)) throw new UserAlreadyLoggedIn("Sei già loggato come " + nick);
+            if (profiloLoggato != null && profiloLoggato.getNickname().equals(nick))
+                throw new UserAlreadyLoggedIn("Sei già loggato come " + nick);
             if (profiloLoggato != null) logout(client); //Se logga un altro utente effettua il logout
 
             String esito = scriviLeggi("LOGIN " + nick + " " + password + " " + udpPort, client);
@@ -161,7 +162,7 @@ public class Main {
             if (esito.equals("Login eseguito con successo")) profiloLoggato = new Utente(nick, password);
         } catch (NoSuchElementException e) {
             System.out.println("login <nickUtente > <password > effettua il login");
-        }catch (UserAlreadyLoggedIn ue){
+        } catch (UserAlreadyLoggedIn ue) {
             System.out.println(ue.getMessage());
         }
 
@@ -201,9 +202,9 @@ public class Main {
             }
             String response = scriviLeggi("SFIDA " + profiloLoggato.getNickname() + " " + amico + "", client);
             sonoInPartita = response.contains("ha accettato la sfida!");
-            try{
-                if(sonoInPartita) read(client); //legge la prima challenge
-            }catch (IOException e){
+            try {
+                if (sonoInPartita) read(client); //legge la prima challenge
+            } catch (IOException e) {
                 e.printStackTrace();
             }
         } catch (NoSuchElementException e) {
@@ -275,7 +276,7 @@ public class Main {
         String response = new String(buffer.array()).trim();
         System.out.println("response: " + response);
         buffer.clear();
-        return  response;
+        return response;
     }
 
     public static String scriviLeggi(String messaggio, SocketChannel client) {

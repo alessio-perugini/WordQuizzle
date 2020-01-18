@@ -12,6 +12,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class Utente implements Serializable {
 
@@ -22,8 +23,18 @@ public class Utente implements Serializable {
     private long punteggioTotale;
     private String nickname, password;
     private ConcurrentHashMap<String, String> listaAmici;
-    /*@JsonIgnore
-    private Socket client;*/
+
+    public AtomicBoolean getInPartita() {
+        if (inPartita == null) inPartita = new AtomicBoolean(false);
+        return inPartita;
+    }
+
+    public void setInPartita(AtomicBoolean inPartita) {
+        this.inPartita = inPartita;
+    }
+
+    @JsonIgnore
+    private AtomicBoolean inPartita;
 
     public SelectionKey getSelKey() {
         return selKey;
@@ -35,14 +46,6 @@ public class Utente implements Serializable {
 
     @JsonIgnore
     private SelectionKey selKey;
-    /*
-    public void setClient(Socket client) {
-        this.client = client;
-    }
-
-    public Socket getClient() {
-        return client;
-    }*/
 
     public String getNickname() {
         return nickname;
@@ -65,7 +68,7 @@ public class Utente implements Serializable {
     }
 
     public ConcurrentHashMap<String, String> getListaAmici() {
-        if(this.listaAmici == null) this.listaAmici = new ConcurrentHashMap<>();
+        if (this.listaAmici == null) this.listaAmici = new ConcurrentHashMap<>();
         return listaAmici;
     }
 
@@ -77,35 +80,36 @@ public class Utente implements Serializable {
         this.connesso = connesso;
     }
 
-    public Utente(){
+    public Utente() {
         this.udpPort = Settings.UDP_PORT;
         this.connesso = false;
     }
 
-    public Utente(SelectionKey selectionKey){
+    public Utente(SelectionKey selectionKey) {
         this.udpPort = Settings.UDP_PORT;
         this.selKey = selectionKey;
     }
 
-    public Utente(String nick, String password){
+    public Utente(String nick, String password) {
         this.nickname = nick;
         this.password = password;
     }
 
-    public synchronized void addFriend(String amico){
-        if(amico == null || amico.equals("")) throw new IllegalArgumentException("Nome amico non valido");
-        if(listaAmici == null) listaAmici = new ConcurrentHashMap<>();
-        if(listaAmici.get(amico) != null) throw new FriendAlreadyExists("Sei già amico");
+    public synchronized void addFriend(String amico) {
+        if (amico == null || amico.equals("")) throw new IllegalArgumentException("Nome amico non valido");
+        if (listaAmici == null) listaAmici = new ConcurrentHashMap<>();
+        if (listaAmici.get(amico) != null) throw new FriendAlreadyExists("Sei già amico");
 
         listaAmici.putIfAbsent(amico, amico);
     }
 
-    public boolean isFriend(String amico){
-        if(amico == null || amico.equals("")) throw new IllegalArgumentException("Nome amico non valido");
+    public boolean isFriend(String amico) {
+        if (amico == null || amico.equals("")) throw new IllegalArgumentException("Nome amico non valido");
+        if (listaAmici == null) listaAmici = new ConcurrentHashMap<>();
         return (listaAmici.get(amico) != null);
     }
 
-    public void addPunteggioPartita(int punteggio){
+    public void addPunteggioPartita(int punteggio) {
         this.punteggioTotale += punteggio;
     }
 

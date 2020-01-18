@@ -15,6 +15,7 @@ import java.sql.Array;
 import java.sql.Timestamp;
 import java.util.*;
 import java.util.concurrent.PriorityBlockingQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class Partita implements Runnable {
     private Utente user;
@@ -53,7 +54,7 @@ public class Partita implements Runnable {
                 sendResponseToClient(sendChallenge);
                 String parolaTradotta = readResponse();
                 if (parolaTradotta.equals(traduzioneGiusta.toLowerCase())) {
-                    this.corrette ++;
+                    this.corrette++;
                 } else {
                     this.sbagliate++;
                 }
@@ -65,6 +66,7 @@ public class Partita implements Runnable {
 
             String esitoPartita = String.format("Parole corrette: %d\n Parole errate: %d\n Parole non risposte: %d\n", this.corrette, this.sbagliate, this.nonRisposte);
             sendResponseToClient(esitoPartita);
+            user.setInPartita(new AtomicBoolean(false));
         } catch (Exception ecc) {
             ecc.printStackTrace();
         }

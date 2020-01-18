@@ -11,13 +11,13 @@ import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class Main {
-    public static void main(String[] args){
+    public static void main(String[] args) {
         RegistrazioneServer regServer = new RegistrazioneServer();
         regServer.start();
         Server objServer = new Server();
-        try{
+        try {
             objServer.start();
-        }catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }

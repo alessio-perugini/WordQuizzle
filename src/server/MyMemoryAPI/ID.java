@@ -2,6 +2,7 @@ package server.MyMemoryAPI;
 
 import java.util.*;
 import java.io.IOException;
+
 import com.fasterxml.jackson.core.*;
 import com.fasterxml.jackson.databind.*;
 import com.fasterxml.jackson.databind.annotation.*;
@@ -17,13 +18,14 @@ public class ID {
         public ID deserialize(JsonParser jsonParser, DeserializationContext deserializationContext) throws IOException, JsonProcessingException {
             ID value = new ID();
             switch (jsonParser.getCurrentToken()) {
-            case VALUE_NUMBER_INT:
-                value.integerValue = jsonParser.readValueAs(Long.class);
-                break;
-            case VALUE_STRING:
-                value.stringValue = jsonParser.readValueAs(String.class);
-                break;
-            default: throw new IOException("Cannot deserialize ID");
+                case VALUE_NUMBER_INT:
+                    value.integerValue = jsonParser.readValueAs(Long.class);
+                    break;
+                case VALUE_STRING:
+                    value.stringValue = jsonParser.readValueAs(String.class);
+                    break;
+                default:
+                    throw new IOException("Cannot deserialize ID");
             }
             return value;
         }
