@@ -1,7 +1,11 @@
 package server;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import server.MyMemoryAPI.Converter;
 import server.MyMemoryAPI.MyMemoryResponse;
+import server.gamelogic.Partita;
+import server.gamelogic.Sfida;
 import server.storage.Storage;
 
 import java.io.*;
@@ -12,14 +16,16 @@ import java.net.URLEncoder;
 import java.nio.channels.SocketChannel;
 import java.nio.charset.StandardCharsets;
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class Utils {
-    private static final int MAX_PORT_NUM = 65535;
-
-    public static String getParamsString(Map<String, String> params) throws UnsupportedEncodingException {
+    public static String getParamsString(Map<String, String> params) {
         StringBuilder result = new StringBuilder();
 
         for (Map.Entry<String, String> entry : params.entrySet()) {
@@ -47,7 +53,6 @@ public class Utils {
         out.writeBytes(Utils.getParamsString(parameters));
         out.flush();
         out.close();
-        //TODO levare la print
         return getFullResponse(con);
     }
 
@@ -68,24 +73,18 @@ public class Utils {
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             System.out.println("/!\\ Shutdown hook ran! /!\\");
-            //ex.shutdownNow();
             ex.shutdown();
             while (!ex.isTerminated());
 
-            try {
-                thread.join();
-                thread.interrupt();
-            } catch (InterruptedException ecc) {
-                System.out.println("Interrupt ricevuto " + ecc.getMessage());
-            }
+            thread.interrupt();
 
             Storage.writeObjectToJSONFile(Settings.JSON_FILENAME, ListaUtenti.getInstance().getHashListaUtenti());
-            System.out.println("LOG: Salvataggio completato.");
+            Utils.log("LOG: Salvataggio completato.");
         }));
     }
 
     private static String getFullResponse(HttpURLConnection con) throws IOException {
-        Reader streamReader = null;
+        Reader streamReader;
 
         if (con.getResponseCode() > 299) {
             streamReader = new InputStreamReader(con.getErrorStream());
@@ -115,24 +114,6 @@ public class Utils {
         }
     }*/
 
-    public static boolean udpPortAvailable(int port) {
-        if (port < 49152 || port > 65535) throw new IllegalArgumentException("Invalid start port: " + port);
-
-        DatagramSocket ds = null;
-        try {
-            ds = new DatagramSocket(port);
-            ds.setReuseAddress(true);
-            return true;
-        } catch (IOException e) {
-        } finally {
-            if (ds != null) {
-                ds.close();
-            }
-        }
-
-        return false;
-    }
-
     public static Timestamp addSecondsToATimeStamp(Timestamp start, int sec) {
         return new Timestamp(start.getTime() + (sec * 1000L));
     }
@@ -156,6 +137,27 @@ public class Utils {
         return "";
     }
 
+    public static void printArrayList(ArrayList<String> ls, String prefix){
+        String toPrint = prefix + "";
+        for (String elemento : ls) toPrint += elemento + ", ";
+        toPrint = toPrint.substring(0, toPrint.length() -2);
+        System.out.println(toPrint);
+    }
+
+    public static void printListaAmici(ConcurrentHashMap<String, String> ls){
+        if(ls == null) return;
+
+        Iterator it = ls.values().iterator();
+        String toPrint = "Lista amici: ";
+        while (it.hasNext()){
+            String amico =  (String)it.next();
+            toPrint += (it.hasNext()) ? amico + ", " : amico;
+            it.remove();
+        }
+        System.out.println(toPrint);
+    }
+
+
     public static void log(String message, Utente user) {
         try {
             String ip = getIpRemoteFromProfile(user);
@@ -164,7 +166,6 @@ public class Utils {
         } catch (Exception e) {
             e.printStackTrace();
         }
-
     }
 
 }

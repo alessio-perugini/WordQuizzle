@@ -36,7 +36,7 @@ public class UdpListener implements Runnable {
         try (DatagramSocket server = new DatagramSocket(udpPort, InetAddress.getByName(Settings.HOST_NAME))) {
             System.out.println("Server up!");
 
-            while (true) {
+            while (!Thread.currentThread().isInterrupted()) {
                 server.receive(rcvPacket);
 
                 String msg = new String(rcvPacket.getData());

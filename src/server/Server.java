@@ -35,7 +35,7 @@ public class Server {
             int ops = serverSckChnl.validOps();
             selector = Selector.open();
             serverSckChnl.register(selector, ops, null);
-
+            Utils.SalvaSuFileHandleSIGTERM(ex);
             gestoreSfide();
 
             while (true) {
@@ -58,6 +58,11 @@ public class Server {
                         }
                     } catch (IOException ex2) {
                         ex2.printStackTrace();
+                        Object[] objClient = (Object[]) key.attachment();
+                        if(objClient.length >= 2){
+                            Utente uCrash = (Utente)objClient[1];
+                            Utils.log("crashato " + uCrash.getNickname(), uCrash);
+                        }
                         key.channel().close();
                         key.cancel();
                         crashClient();
@@ -71,10 +76,10 @@ public class Server {
 
     public void crashClient() {
         if (socUser != null && socUser.getNickname() != null) {
-            Utils.log(socUser.getNickname() + " è crashato!");
             ListaUtenti.getInstance().setConnected(socUser.getNickname(), false); //Se crasha lo disconnette
+            socUser = null;
         }
-        socUser = null;
+
         Utils.log("Client closed connection");
     }
 
@@ -88,7 +93,6 @@ public class Server {
         socUser = new Utente(sk);
         Object[] objClient = {bfs, socUser};
         sk.attach(objClient);
-
         Utils.log(client.getRemoteAddress().toString());
     }
 
@@ -135,8 +139,8 @@ public class Server {
             byteLeft = socChanClient.read(msgBuf);
             if (byteLeft == -1) throw new IOException();
         }
-
         this.socUser = (Utente) objClient[1];
+
         if (!message.toString().isEmpty()) messageParser(message.toString());
     }
 
