@@ -108,6 +108,7 @@ public class Main {
                                     write(currToken, client);
                                     String srvResp = read(client);
                                     if (srvResp.contains("Parole corrette:")) {
+                                        read(client);//mi metto in lettura per dirmi se ho vinto o perso!
                                         sonoInPartita = false;
                                     }
                                 } catch (Exception e) {

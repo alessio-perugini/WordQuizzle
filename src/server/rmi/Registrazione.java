@@ -5,7 +5,6 @@ import errori.UserAlreadyExists;
 import server.ListaUtenti;
 import server.Utente;
 
-import java.rmi.RemoteException;
 import java.rmi.server.RemoteServer;
 
 public class Registrazione extends RemoteServer implements RegistrazioneService {
@@ -18,7 +17,7 @@ public class Registrazione extends RemoteServer implements RegistrazioneService 
     }
 
     @Override
-    public boolean registra_utente(String nickName, String password) throws RemoteException, IllegalArgumentException, UserAlreadyExists {
+    public boolean registra_utente(String nickName, String password) throws IllegalArgumentException, UserAlreadyExists {
         if (nickName == null || nickName.length() == 0) throw new IllegalArgumentException("nickname non valido");
         if (password == null || password.length() < 6) throw new InvalidPassword("Password non valida");
 

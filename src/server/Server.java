@@ -36,8 +36,10 @@ public class Server {
             selector = Selector.open();
             serverSckChnl.register(selector, ops, null);
 
+            gestoreSfide();
+
             while (true) {
-                selector.select();
+                selector.selectNow();
 
                 Set<SelectionKey> readyKeys = selector.selectedKeys();
                 Iterator<SelectionKey> iterator = readyKeys.iterator();
@@ -56,7 +58,6 @@ public class Server {
                         }
                     } catch (IOException ex2) {
                         ex2.printStackTrace();
-                        Utils.log(String.format("%s è crashato!", this.socUser.getNickname()), this.socUser);
                         key.channel().close();
                         key.cancel();
                         crashClient();
@@ -70,11 +71,11 @@ public class Server {
 
     public void crashClient() {
         if (socUser != null && socUser.getNickname() != null) {
-            System.out.println(socUser.getNickname() + " è crashato!");
+            Utils.log(socUser.getNickname() + " è crashato!");
             ListaUtenti.getInstance().setConnected(socUser.getNickname(), false); //Se crasha lo disconnette
         }
-        socUser = null; //TODO vedere se è problematico
-        System.out.println("Client closed connection");
+        socUser = null;
+        Utils.log("Client closed connection");
     }
 
     public void keyAcceptableRegister(Selector selector) throws IOException {
@@ -118,7 +119,10 @@ public class Server {
         byte[] bytes;
         ByteBuffer msgBuf = bfs[1];
         bfs[0].flip();
-        int l = bfs[0].getInt();
+        int l =0;
+        if(bfs[0].hasRemaining()){
+            l = bfs[0].getInt();
+        }
 
         StringBuilder message = new StringBuilder();
 
@@ -291,8 +295,6 @@ public class Server {
         if (amico != null && !amico.isConnesso()) throw new FriendNotConnected("L'amico non è connesso");
         if (amico.getInPartita().get()) throw new FriendIsAlreadyPlaying("L'amico è già in una partita");
 
-        //TODO gestire le IOEXC dei thread per lanciare un custom err
-
         profiloUtente.setInPartita(new AtomicBoolean(true));
 
         DatagramSocket udpClient = new DatagramSocket();
@@ -324,7 +326,6 @@ public class Server {
         }
         //sendResponseToClient(nickAmico + " ha accettato la sfida!");
         socChanClient.write(ByteBuffer.wrap((nickAmico + " ha accettato la sfida!" + "\n").getBytes(StandardCharsets.UTF_8)));
-        System.out.println("Sfida accettata");
         amico.setInPartita(new AtomicBoolean(true));
 
         Sfida objSfida = new Sfida(profiloUtente.getNickname().hashCode() + new Random().nextInt(4));
@@ -336,8 +337,6 @@ public class Server {
         ex.execute(partitaSfidante);
         ex.execute(partitaAmico);
         Utils.log(String.format("%s ha sfidato %s (%s) , (%s)", nickUtente, nickAmico, Utils.getIpRemoteFromProfile(profiloUtente), Utils.getIpRemoteFromProfile(amico)));
-
-        //TODO vedere se creare un thread che fa pooling sulla struttura dati
     }
 
     public void mostra_punteggio(String nickUtente) throws ClosedChannelException {
@@ -381,5 +380,11 @@ public class Server {
 
         Object[] objResponse = {testo + "\n", this.socUser};
         socChanClient.register(selector, SelectionKey.OP_WRITE, objResponse);
+    }
+
+    private void gestoreSfide(){
+        WorkerSfida workerSfida = new WorkerSfida();
+        Thread thGestoreSfide = new Thread(workerSfida);
+        thGestoreSfide.start();
     }
 }

@@ -20,25 +20,47 @@ public class Partita implements Runnable {
     }
 
     private Utente user;
-    private Timestamp inizioPartita, finePartita;
+    public Timestamp inizioPartita;
+
+    public boolean isFinita() {
+        return finita;
+    }
+
+    public boolean finita;
+    public Timestamp getFinePartita() {
+        return finePartita;
+    }
+
+    public Timestamp finePartita;
     private ArrayList<HashMap<String, String>> paroleDaIndovinare;
-    private int paroleTotali, sbagliate, corrette, nonRisposte;
+    private int paroleTotali;
+    private int sbagliate;
+    private int corrette;
+    private int nonRisposte;
+
+    public int getPunteggioPartita() {
+        return punteggioPartita;
+    }
+
+    private int punteggioPartita;
     SocketChannel client;
 
     public Partita(Utente user, Sfida sfida) {
-        this.user = user;
         createDeepCopyOfWordsToGuess(sfida.getParoleDaIndovinare());//TODO mesà che lo prendo diretatmente da sfida
+        this.user = user;
+        this.finita = false;
         this.paroleTotali = this.paroleDaIndovinare.size();
         this.sbagliate = 0;
         this.corrette = 0;
         this.nonRisposte = 0;
+        this.punteggioPartita = 0;
         this.inizioPartita = new Timestamp(System.currentTimeMillis());
         this.finePartita = Utils.addSecondsToATimeStamp(this.inizioPartita, Settings.DURATA_PARTITA_SEC);
         this.client = (SocketChannel) user.getSelKey().channel();
     }
 
     private void createDeepCopyOfWordsToGuess(ArrayList<HashMap<String, String>> wordToGuess) {
-        this.paroleDaIndovinare = (ArrayList<HashMap<String, String>>) wordToGuess.clone();
+        this.paroleDaIndovinare = wordToGuess;//(ArrayList<HashMap<String, String>>) wordToGuess.clone();
     }
 
     @Override
@@ -49,7 +71,6 @@ public class Partita implements Runnable {
             do {
                 String parolaDaTradurre = ((String) paroleDaIndovinare.get(i).keySet().toArray()[0]);
                 String traduzioneGiusta = paroleDaIndovinare.get(i).get(parolaDaTradurre);
-                System.out.println(parolaDaTradurre + " -> " + traduzioneGiusta);
                 String sendChallenge = String.format("Challenge %d/%d: %s", i + 1, this.paroleTotali, parolaDaTradurre);
                 sendResponseToClient(sendChallenge);
                 String parolaTradotta = readResponse();
@@ -64,13 +85,14 @@ public class Partita implements Runnable {
             } while (!Utils.isGivenTimeExpired(this.finePartita) && (++i < this.paroleTotali));
 
             this.nonRisposte = this.paroleTotali - i;
-            int punteggioPartita = (this.corrette * 2) - this.sbagliate;
-            user.addPunteggioPartita(punteggioPartita);
+            this.punteggioPartita = (this.corrette * 2) - this.sbagliate;
+            user.addPunteggioPartita(this.punteggioPartita);
 
             String esitoPartita = String.format("Parole corrette: %d\n Parole errate: %d\n Parole non risposte: %d\n", this.corrette, this.sbagliate, this.nonRisposte);
             sendResponseToClient(esitoPartita);
-            user.setInPartita(new AtomicBoolean(false));
+            this.finita = true;
         } catch (Exception ecc) {
+            this.finita = true;
             user.setInPartita(new AtomicBoolean(false));
             ecc.printStackTrace();
         }
@@ -87,7 +109,7 @@ public class Partita implements Runnable {
         return new String(msg.array()).toLowerCase().trim();
     }
 
-    private void sendResponseToClient(String testo) {
+    public void sendResponseToClient(String testo) {
         if (testo == null) throw new IllegalArgumentException();
         if (client == null) throw new NullPointerException();
 

@@ -16,19 +16,8 @@ public class Sfida {
     private int idSfida, K_paroleDaInviare;
     private ArrayList<HashMap<String, String>> paroleDaIndovinare;
 
-    public AtomicBoolean getTraduzioniGenerate() {
-        if (traduzioniGenerate == null) traduzioniGenerate = new AtomicBoolean(false);
-        return traduzioniGenerate;
-    }
-
-    public void setTraduzioniGenerate(AtomicBoolean traduzioniGenerate) {
-        this.traduzioniGenerate = traduzioniGenerate;
-    }
-
-    private AtomicBoolean traduzioniGenerate;
-
     public ArrayList<HashMap<String, String>> getParoleDaIndovinare() {
-        if (!traduzioniGenerate.get()) generaTraduzioni();
+        if (paroleDaIndovinare == null) generaTraduzioni();
 
         return paroleDaIndovinare;
     }
@@ -49,19 +38,17 @@ public class Sfida {
         Random rand = new Random();
         int wordToSend = rand.nextInt(Settings.MAX_PAROLE_DA_GENERARE);
         this.idSfida = idSfida;
-        this.K_paroleDaInviare = (wordToSend == 0) ? Settings.MIN_PAROLE_DA_GENERARE : wordToSend;
+        this.K_paroleDaInviare = Math.max(wordToSend, Settings.MIN_PAROLE_DA_GENERARE);
         this.paroleDaIndovinare = Dizionario.getInstance().getNwordsFromDictionary(K_paroleDaInviare);
         generaTraduzioni();
     }
 
     public void setPartite(Partita pSfidante, Partita pSfidato) {
-        if (pSfidante == null) this.partitaSfidante = pSfidante;
-        if (pSfidato == null) this.partitaSfidato = pSfidato;
+        if (this.partitaSfidante == null) this.partitaSfidante = pSfidante;
+        if (this.partitaSfidato == null) this.partitaSfidato = pSfidato;
     }
 
     private void generaTraduzioni() {
-        if (getTraduzioniGenerate().get()) return;
-
         for (Iterator<HashMap<String, String>> elm = this.paroleDaIndovinare.iterator(); elm.hasNext(); ) {
             try {
                 HashMap<String, String> elemento = elm.next();
@@ -71,7 +58,5 @@ public class Sfida {
                 e.printStackTrace();
             }
         }
-
-        this.traduzioniGenerate.set(true);
     }
 }
