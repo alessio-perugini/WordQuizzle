@@ -28,6 +28,7 @@ public class Main {
     static final BufferedReader consoleRdr = new BufferedReader(new InputStreamReader(System.in));
     static RichiestaSfida reqSfida = RichiestaSfida.getInstance();
     static boolean sonoInPartita = false;
+    static boolean quit;
 
     public static void main(String[] args) {
         udpPort = (args.length > 0) ? Integer.parseInt(args[0]) : 50002;
@@ -41,7 +42,7 @@ public class Main {
             SocketAddress address = new InetSocketAddress(InetAddress.getByName("localhost"), Settings.TCP_PORT);
             SocketChannel client = SocketChannel.open(address);
 
-            boolean quit = false;
+            quit = false;
             String scelta;
 
             while (!quit) {
@@ -284,7 +285,8 @@ public class Main {
 
     static String read(SocketChannel client) throws IOException {
         ByteBuffer buffer = ByteBuffer.allocate(1024);
-        client.read(buffer);
+        int byteRead = client.read(buffer);
+        isServerCrashed(byteRead);
         String response = new String(buffer.array()).trim();
         System.out.println(response);
         buffer.clear();
@@ -297,7 +299,8 @@ public class Main {
             client.write(ByteBuffer.wrap(messaggio.getBytes(StandardCharsets.UTF_8)));
 
             ByteBuffer buffer = ByteBuffer.allocate(1024);
-            client.read(buffer);
+            int byteRead = client.read(buffer);
+            isServerCrashed(byteRead);
             String response = new String(buffer.array()).trim();
             buffer.clear();
             return response;
@@ -305,6 +308,13 @@ public class Main {
             ex.printStackTrace();
         }
         return "";
+    }
+
+    private static void isServerCrashed(int byteRead) throws IOException {
+        if (byteRead >= 0) return;
+        quit = true;
+        System.out.println("Il server è crashato!");
+        throw new IOException("Server crashed");
     }
 
     private static void printServerResponse(String msg) {

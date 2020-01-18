@@ -14,5 +14,6 @@ public class Settings {
     public static final int MAX_PAROLE_DA_GENERARE = 10;
     public static final int MIN_PAROLE_DA_GENERARE = 3;
     public static final int PUNTI_EXTRA = 3; //Z
+    public static final boolean AUTO_SAVE_JSON = false;
 
 }

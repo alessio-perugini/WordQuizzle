@@ -47,7 +47,7 @@ public class Partita implements Runnable {
     SocketChannel client;
 
     public Partita(Utente user, Sfida sfida) {
-        createDeepCopyOfWordsToGuess(sfida.getParoleDaIndovinare());//TODO mesà che lo prendo diretatmente da sfida
+        this.paroleDaIndovinare = sfida.getParoleDaIndovinare();
         this.user = user;
         this.finita = false;
         this.paroleTotali = this.paroleDaIndovinare.size();
@@ -58,10 +58,6 @@ public class Partita implements Runnable {
         this.inizioPartita = new Timestamp(System.currentTimeMillis());
         this.finePartita = Utils.addSecondsToATimeStamp(this.inizioPartita, Settings.DURATA_PARTITA_SEC);
         this.client = (SocketChannel) user.getSelKey().channel();
-    }
-
-    private void createDeepCopyOfWordsToGuess(ArrayList<HashMap<String, String>> wordToGuess) {
-        this.paroleDaIndovinare = wordToGuess;//(ArrayList<HashMap<String, String>>) wordToGuess.clone();
     }
 
     @Override
@@ -102,7 +98,7 @@ public class Partita implements Runnable {
     private String readResponse() throws IOException {
         if (client == null) throw new NullPointerException();
         ByteBuffer msg = ByteBuffer.allocate(1024);
-        long byteLeft = 0;
+        long byteLeft;
         do {
             byteLeft = client.read(msg);
             if (byteLeft == -1) throw new IOException();

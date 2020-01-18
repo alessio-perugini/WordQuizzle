@@ -63,11 +63,12 @@ public class Utils {
                 }
             }
         }));
-        thread.start();
+
+        if (Settings.AUTO_SAVE_JSON) thread.start();
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             System.out.println("/!\\ Shutdown hook ran! /!\\");
-            thread.interrupt();
+            if (Settings.AUTO_SAVE_JSON) thread.interrupt();
             ex.shutdownNow();
             while (!ex.isTerminated()) ;
 
