@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import server.Utente;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -58,25 +59,27 @@ public class Storage {
             FileChannel.open(Paths.get(path), StandardOpenOption.READ);
         } catch (IOException fe) {//Se non esiste crea il file (path), con dentro un json vuoto
             writeObjectToJSONFile(path, new ConcurrentHashMap<String, Utente>());
+            fe.printStackTrace();
         }
 
         try {
             //TODO migliroare con il buffered stream
-            FileChannel inChannel = FileChannel.open(Paths.get(path), StandardOpenOption.READ);
-            ByteBuffer buffer = ByteBuffer.allocate(2048);
-            boolean stop = false;
+            FileChannel fcReader = FileChannel.open(Paths.get(path), StandardOpenOption.READ);
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
 
-            while (!stop) {
-                int bytesRead = inChannel.read(buffer);
-                if (bytesRead == -1) stop = true;
+            int bufferSize = (512 > fcReader.size()) ? (int) fcReader.size() : 512;
+            ByteBuffer buff = ByteBuffer.allocate(bufferSize);
+
+            while (fcReader.read(buff) > 0) {
+                out.write(buff.array(), 0, buff.position());
+                buff.clear();
             }
-            inChannel.close();
 
             final ObjectMapper mapper = new ObjectMapper();
             ConcurrentHashMap<String, Utente> ls = mapper.reader()
                     .forType(new TypeReference<ConcurrentHashMap<String, Utente>>() {
                     })
-                    .readValue(buffer.array());
+                    .readValue(out.toByteArray());
             return ls;
         } catch (IOException e) {
             e.printStackTrace();

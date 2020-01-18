@@ -2,6 +2,7 @@ package client;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import errori.UserAlreadyExists;
 import errori.UserAlreadyLoggedIn;
 import server.Settings;
 import server.Utente;
@@ -55,7 +56,7 @@ public class Main {
                             client.close();
                             break;
                         case "registra_utente":
-                            registrazione(tokenizedLine, client);
+                            registrazione(tokenizedLine);
                             break;
                         case "login":
                             login(tokenizedLine, client);
@@ -169,12 +170,12 @@ public class Main {
 
     }
 
-    public static void registrazione(StringTokenizer tokenizedLine, SocketChannel client) {
+    public static void registrazione(StringTokenizer tokenizedLine) {
         try {
             RmiClient rmiReg = new RmiClient();
             String nickname = tokenizedLine.nextToken();
             String pw = tokenizedLine.nextToken();
-            System.out.println((rmiReg.registra_utente(nickname, pw)) ? "Registrato" : "Non registrato");
+            if(rmiReg.registra_utente(nickname, pw)) System.out.println("Registrazione effettuata!");
         } catch (NoSuchElementException e) {
             System.out.println("registra_utente <nickUtente > <password >");
         }

@@ -28,7 +28,7 @@ public class ListaUtenti {
     public synchronized Utente addUtente(Utente user) {
         if (user == null) throw new IllegalArgumentException();
         if (!hashListaUtenti.isEmpty() && hashListaUtenti.get(user.getNickname()) != null)
-            throw new UserAlreadyExists();
+            throw new UserAlreadyExists("L'utente esiste già");
 
         return hashListaUtenti.putIfAbsent(user.getNickname(), user);
     }

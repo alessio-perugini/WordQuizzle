@@ -61,11 +61,10 @@ public class Server {
                         Object[] objClient = (Object[]) key.attachment();
                         if (objClient.length >= 2) {
                             Utente uCrash = (Utente) objClient[1];
-                            Utils.log("crashato " + uCrash.getNickname(), uCrash);
+                            crashClient(uCrash);
                         }
                         key.channel().close();
                         key.cancel();
-                        crashClient();
                     }
                 }
             }
@@ -74,13 +73,11 @@ public class Server {
         }
     }
 
-    public void crashClient() {
-        if (socUser != null && socUser.getNickname() != null) {
-            ListaUtenti.getInstance().setConnected(socUser.getNickname(), false); //Se crasha lo disconnette
-            socUser = null;
+    public void crashClient(Utente uCrash) {
+        if(uCrash != null && uCrash.getNickname() != null){
+            ListaUtenti.getInstance().setConnected(uCrash.getNickname(), false); //Se crasha lo disconnette
+            Utils.log("crashato/connessione chiusa " + uCrash.getNickname(), uCrash);
         }
-
-        Utils.log("Client closed connection");
     }
 
     public void keyAcceptableRegister(Selector selector) throws IOException {

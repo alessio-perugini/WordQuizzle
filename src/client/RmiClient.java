@@ -1,9 +1,13 @@
 package client;
 
+import errori.InvalidPassword;
+import errori.UserAlreadyExists;
 import server.Settings;
 import server.rmi.RegistrazioneService;
 
+import java.rmi.NotBoundException;
 import java.rmi.Remote;
+import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 
@@ -17,8 +21,10 @@ public class RmiClient {
             remoteObject = r.lookup("REGISTRAZIONE-SERVER");
             serverObject = (RegistrazioneService) remoteObject;
             return serverObject.registra_utente(username, pw);
-        } catch (Exception e) {
-            e.printStackTrace();
+        }catch (IllegalArgumentException | UserAlreadyExists | InvalidPassword e){
+            System.out.println(e.getMessage());
+        }catch (RemoteException | NotBoundException e2){
+            e2.printStackTrace();
         }
         return false;
     }

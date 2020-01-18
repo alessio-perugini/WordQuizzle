@@ -17,17 +17,11 @@ public class Registrazione extends RemoteServer implements RegistrazioneService 
     }
 
     @Override
-    public boolean registra_utente(String nickName, String password) throws IllegalArgumentException, UserAlreadyExists {
+    public boolean registra_utente(String nickName, String password) throws IllegalArgumentException, UserAlreadyExists, InvalidPassword {
         if (nickName == null || nickName.length() == 0) throw new IllegalArgumentException("nickname non valido");
         if (password == null || password.length() < 6) throw new InvalidPassword("Password non valida");
-
         Utente user = new Utente(nickName, password);
-        //TODO da cambiare che ritorna una string
-        try {
-            return this.lsUtenti.addUtente(user) == null;
-        } catch (Exception ecc) {
-            ecc.printStackTrace();
-            return false;
-        }
+        if( this.lsUtenti.addUtente(user) != null) throw new UserAlreadyExists("Il nickname già inserito è stato preso");
+        return  true;
     }
 }
