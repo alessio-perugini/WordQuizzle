@@ -41,7 +41,7 @@ public class Server {
             Utils.SalvaSuFileHandleSIGTERM(ex, thGestoreSfide); //Gestisce il salvatagio a sigterm e salvataggio automatico
 
             while (true) {
-                selector.selectNow();
+                selector.select();
 
                 Set<SelectionKey> readyKeys = selector.selectedKeys();
                 Iterator<SelectionKey> iterator = readyKeys.iterator();

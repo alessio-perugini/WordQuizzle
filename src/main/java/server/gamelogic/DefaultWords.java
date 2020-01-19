@@ -1,5 +1,8 @@
 package server.gamelogic;
 
+/**
+ * Enum utilizzato nel caso non si fornisca un file di dizionario nel path dell'seguibile jar
+ */
 public enum DefaultWords {
     mela,
     pera,

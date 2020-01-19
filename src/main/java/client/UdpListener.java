@@ -10,6 +10,9 @@ import java.nio.charset.StandardCharsets;
 import java.sql.Timestamp;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+/**
+ * Utilizzato per avviare il thread che si mette in ascolto su una porta udp per ricevere e gesstire le richieste di sfida
+ */
 public class UdpListener implements Runnable {
     private int udpPort; //porta udp su cui stare in ascolto per le sfide
     private RichiestaSfida richiestaSfida; //struttura dati per sincronizzarmi con il client Main
@@ -23,6 +26,11 @@ public class UdpListener implements Runnable {
 
     private String rispostaSfida;
 
+    /**
+     * Inizzializza le varibili glovali
+     *
+     * @param uPort porta udp su cui mettere in ascolto il server
+     */
     public UdpListener(int uPort) {
         this.richiestaSfida = RichiestaSfida.getInstance(); //Struttura dati di sync con la console main
         this.udpPort = uPort;

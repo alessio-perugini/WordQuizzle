@@ -11,6 +11,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 
+/**
+ * Gestisce la creazione del dizionario delle parole da tradurre. Carica prima le parole dal file scegliendo K parole
+ * random
+ */
 public class Dizionario {
     private ArrayList<String> dizionario;
     private static Dizionario instance;
@@ -29,7 +33,13 @@ public class Dizionario {
         return instance;
     }
 
+    /**
+     * Carica il dizionario in memoria dato il path in ingresso
+     *
+     * @param path percorso del file del dizionario
+     */
     private void loadDictionaryFromFile(String path) {//Apre in lettura il file del dizionario (se c'è)
+
         try (BufferedReader reader = Files.newBufferedReader(Paths.get(path), StandardCharsets.UTF_8)) {
             String currentLine;
             while ((currentLine = reader.readLine()) != null) {
@@ -40,6 +50,12 @@ public class Dizionario {
         }
     }
 
+    /**
+     * Genera un arraylist di coppia ita-eng dove eng non è settato e verrà inserito quando si fa la richiesta all'api
+     *
+     * @param n il numero delle parole che deve prendere dal dizionario
+     * @return ritorna una lista di hashmap che contine parole-traduzione
+     */
     public ArrayList<HashMap<String, String>> getNwordsFromDictionary(int n) {
         if (n > this.dizionario.size())
             throw new IllegalArgumentException("Il dizionario ha meno parole di quelle richieste");

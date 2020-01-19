@@ -21,7 +21,7 @@ public class RichiestaSfida {
     }
 
     /**
-     * Serve per
+     * Serve per vedere se devo rispondere ad una richiesta di sfida
      *
      * @return sfidaToAnswer
      */
@@ -29,20 +29,34 @@ public class RichiestaSfida {
         return sfidaToAnswer;
     }
 
+    /**
+     * Serve per settare se devo rispondere o meno a richieste di sfida
+     *
+     * @param sfidaToAnswer
+     */
     public void setSfidaToAnswer(AtomicBoolean sfidaToAnswer) {
         this.sfidaToAnswer = sfidaToAnswer;
     }
 
+    /**
+     * Utilizzata per segnalare se devo rispondere ad una richiesta di sfida
+     */
     public AtomicBoolean sfidaToAnswer;
 
     public synchronized Timestamp getDataScadenzaRichiesta() {
         return dataScadenzaRichiesta;
     }
 
+    /**
+     * @param dataScadenzaRichiesta il tempo di quando scade la richiesta di sfida
+     */
     public synchronized void setDataScadenzaRichiesta(Timestamp dataScadenzaRichiesta) {
         this.dataScadenzaRichiesta = dataScadenzaRichiesta;
     }
 
+    /**
+     * Utilizzata per vedere se ho esaurito il tempo di risposta alla sfida
+     */
     private Timestamp dataScadenzaRichiesta;
 
     private RichiestaSfida() {
