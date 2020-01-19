@@ -11,7 +11,7 @@ public class RegistrazioneServer {
 
     public void start() {
         try {
-            Registrazione reg = new Registrazione();
+            Registrazione reg = new Registrazione(); //creo lo stub
             RegistrazioneService stub = (RegistrazioneService) UnicastRemoteObject.exportObject(reg, 0);
 
             //Creo regestry sulla PORT

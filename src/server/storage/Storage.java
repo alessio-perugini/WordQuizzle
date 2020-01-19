@@ -5,11 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import server.Utente;
 
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.nio.ByteBuffer;
+import java.io.*;
 import java.nio.channels.FileChannel;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
@@ -22,15 +18,10 @@ public class Storage {
             file.createNewFile();
 
             ObjectMapper objectMapper = new ObjectMapper();
-            byte[] content = objectMapper.writeValueAsBytes(obj);
+            byte[] content = objectMapper.writeValueAsBytes(obj);//Serializza l'oggetto in byte
 
-            try (FileOutputStream fis = new FileOutputStream(filename)) {
-                FileChannel outWrapChannel = fis.getChannel();
-                ByteBuffer bb = ByteBuffer.wrap(content);
-                outWrapChannel.write(bb);
-
-                bb.clear();
-                outWrapChannel.close();
+            try (FileOutputStream out = new FileOutputStream(filename)) {
+                out.write(content); //Scrivo sul file
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -62,27 +53,23 @@ public class Storage {
             fe.printStackTrace();
         }
 
-        try {
-            //TODO migliroare con il buffered stream
-            FileChannel fcReader = FileChannel.open(Paths.get(path), StandardOpenOption.READ);
-            ByteArrayOutputStream out = new ByteArrayOutputStream();
+        try (FileInputStream in = new FileInputStream(path); //Creo l'input stream del file
+             ByteArrayOutputStream out = new ByteArrayOutputStream()) { //creo l'out su dove scrivere i byte letti
+            byte[] byteArray = new byte[512];
+            int bytesCount;
 
-            int bufferSize = (512 > fcReader.size()) ? (int) fcReader.size() : 512;
-            ByteBuffer buff = ByteBuffer.allocate(bufferSize);
-
-            while (fcReader.read(buff) > 0) {
-                out.write(buff.array(), 0, buff.position());
-                buff.clear();
+            while ((bytesCount = in.read(byteArray)) != -1) {
+                out.write(byteArray, 0, bytesCount);
             }
 
-            final ObjectMapper mapper = new ObjectMapper();
+            final ObjectMapper mapper = new ObjectMapper(); //leggo i byte e ricreo l'oggetto
             ConcurrentHashMap<String, Utente> ls = mapper.reader()
                     .forType(new TypeReference<ConcurrentHashMap<String, Utente>>() {
                     })
                     .readValue(out.toByteArray());
             return ls;
-        } catch (IOException e) {
-            e.printStackTrace();
+        } catch (Exception ec) {
+            ec.printStackTrace();
         }
         return null;
     }
