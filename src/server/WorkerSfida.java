@@ -5,7 +5,6 @@ import server.gamelogic.Partita;
 import server.gamelogic.Sfida;
 
 import java.util.Iterator;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public class WorkerSfida implements Runnable {
     ListaSfide lsSfide;
@@ -16,15 +15,16 @@ public class WorkerSfida implements Runnable {
 
     @Override
     public void run() {
-        while (!Thread.currentThread().isInterrupted()) {
+        while (!Thread.currentThread().isInterrupted()) { //Se non è interrotto
             Iterator<Sfida> it = lsSfide.getHashListaSfide().values().iterator();
-            while (it.hasNext()) {
+            while (it.hasNext()) { //Controllo se ci sono sfide
                 Sfida sfida = it.next();
                 if (sfida == null) continue;
 
                 Partita p1 = sfida.getPartitaSfidante();
                 Partita p2 = sfida.getPartitaSfidato();
-                if (p1 == null || p2 == null) continue;
+                if (p1 == null || p2 == null)
+                    continue;//Se non sono null controllo se è finito il tempo o entrambi gli utenti hanno finito la partita
                 if (!(Utils.isGivenTimeExpired(p1.getFinePartita()) && Utils.isGivenTimeExpired(p2.getFinePartita())) && !(p1.isFinita() && p2.isFinita()))
                     continue;
                 Utils.log("/!\\ Invio messaggio fine partita");
@@ -45,8 +45,8 @@ public class WorkerSfida implements Runnable {
                     p1.sendResponseToClient(pareggio);
                     p2.sendResponseToClient(pareggio);
                 }
-                p1.getUser().setInPartita(new AtomicBoolean(false));
-                p2.getUser().setInPartita(new AtomicBoolean(false));
+                p1.getUser().setInPartita(false);
+                p2.getUser().setInPartita(false);
                 lsSfide.removeSfida(sfida);
                 Utils.log("Sfida terminata!");
                 it.remove();

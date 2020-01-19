@@ -10,6 +10,7 @@ import server.Utils;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.ConnectException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
@@ -21,7 +22,7 @@ import java.util.HashMap;
 import java.util.NoSuchElementException;
 import java.util.StringTokenizer;
 
-public class Main {
+public class MainClass {
     static int udpPort = Settings.UDP_PORT;
     static Utente profiloLoggato = null;
     static final BufferedReader consoleRdr = new BufferedReader(new InputStreamReader(System.in));
@@ -43,7 +44,7 @@ public class Main {
         try {//instauro la connessione con il server tcp di gioco
             SocketAddress address = new InetSocketAddress(InetAddress.getByName("localhost"), Settings.TCP_PORT);
             client = SocketChannel.open(address);
-
+            welcome();
             while (!quit) {
                 scelta = consoleRdr.readLine().trim();//leggo la scelta dell'utente levando eventuali spazi vuoti alla fine
                 try {
@@ -95,6 +96,8 @@ public class Main {
                     System.out.println(nse.getMessage());
                 }
             }
+        } catch (ConnectException ce) {
+            System.out.println("/!\\Impossibile connettersi al server!/!\\\n   Controlla che il server sia aperto");
         } catch (IOException ex) {
             ex.printStackTrace();
         }
@@ -118,6 +121,25 @@ public class Main {
                 "mostra_punteggio mostra il punteggio dell’utente \n" +
                 "mostra_classifica mostra una classifica degli amici dell’utente (incluso l’utente stesso) \n" +
                 "quit per uscire");
+    }
+
+    private static void welcome() {
+        System.out.println("                                                                                                                                 \n" +
+                "                                                                                                                                 \n" +
+                "           .---.                                ,----..                                                        ,--,              \n" +
+                "          /. ./|                       ,---,   /   /   \\                    ,--,                             ,--.'|              \n" +
+                "      .--'.  ' ;   ,---.    __  ,-.  ,---.'|  /   .     :            ,--, ,--.'|          ,----,       ,----,|  | :              \n" +
+                "     /__./ \\ : |  '   ,'\\ ,' ,'/ /|  |   | : .   /   ;.  \\         ,'_ /| |  |,         .'   .`|     .'   .`|:  : '              \n" +
+                " .--'.  '   \\' . /   /   |'  | |' |  |   | |.   ;   /  ` ;    .--. |  | : `--'_      .'   .'  .'  .'   .'  .'|  ' |      ,---.   \n" +
+                "/___/ \\ |    ' '.   ; ,. :|  |   ,',--.__| |;   |  ; \\ ; |  ,'_ /| :  . | ,' ,'|   ,---, '   ./ ,---, '   ./ '  | |     /     \\  \n" +
+                ";   \\  \\;      :'   | |: :'  :  / /   ,'   ||   :  | ; | '  |  ' | |  . . '  | |   ;   | .'  /  ;   | .'  /  |  | :    /    /  | \n" +
+                " \\   ;  `      |'   | .; :|  | ' .   '  /  |.   |  ' ' ' :  |  | ' |  | | |  | :   `---' /  ;--,`---' /  ;--,'  : |__ .    ' / | \n" +
+                "  .   \\    .\\  ;|   :    |;  : | '   ; |:  |'   ;  \\; /  |  :  | : ;  ; | '  : |__   /  /  / .`|  /  /  / .`||  | '.'|'   ;   /| \n" +
+                "   \\   \\   ' \\ | \\   \\  / |  , ; |   | '/  ' \\   \\  ',  . \\ '  :  `--'   \\|  | '.'|./__;     .' ./__;     .' ;  :    ;'   |  / | \n" +
+                "    :   '  |--\"   `----'   ---'  |   :    :|  ;   :      ; |:  ,      .-./;  :    ;;   |  .'    ;   |  .'    |  ,   / |   :    | \n" +
+                "     \\   \\ ;                      \\   \\  /     \\   \\ .'`--\"  `--`----'    |  ,   / `---'        `---'         ---`-'   \\   \\  /  \n" +
+                "      '---\"                        `----'       `---`                      ---`-'                                       `----'   \n" +
+                "\nper la lista dei comandi digare --help");
     }
 
     private static void challangeRequest(String currToken) throws IOException {

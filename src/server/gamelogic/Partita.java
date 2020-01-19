@@ -27,7 +27,7 @@ public class Partita implements Runnable {
     }
 
     public void setFinita(boolean finita) {
-        this.finita = new AtomicBoolean(finita);
+        this.finita.set(finita);
     }
 
     public AtomicBoolean finita; //Se la partita è conclusa
@@ -65,6 +65,7 @@ public class Partita implements Runnable {
     }
 
     private int i;
+
     @Override
     public void run() {
         try {
@@ -99,7 +100,7 @@ public class Partita implements Runnable {
             setFinita(true);
         } catch (Exception ecc) {
             setFinita(true);
-            user.setInPartita(new AtomicBoolean(false));
+            user.setInPartita(false);
             ecc.printStackTrace();
         }
     }
@@ -109,8 +110,7 @@ public class Partita implements Runnable {
         this.punteggioPartita = (this.corrette * 2) - this.sbagliate;
         user.addPunteggioPartita(this.punteggioPartita); //Aggiungi il punteggio all'utente
 
-        String esitoPartita = String.format("Hai tradotto correttamente %d parole, ne hai sbagliate %d e non risposta a %d.\nHai totalizzato %d punti.", this.corrette, this.sbagliate, this.nonRisposte, this.punteggioPartita);
-        return esitoPartita;
+        return String.format("Hai tradotto correttamente %d parole, ne hai sbagliate %d e non risposta a %d.\nHai totalizzato %d punti.", this.corrette, this.sbagliate, this.nonRisposte, this.punteggioPartita);
     }
 
     private String readResponse() throws IOException {

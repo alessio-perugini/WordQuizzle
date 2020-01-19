@@ -16,7 +16,6 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public class Server {
     private Utente socUser;
@@ -35,8 +34,11 @@ public class Server {
             int ops = serverSckChnl.validOps();//Op valide
             selector = Selector.open();//Apro il selector
             serverSckChnl.register(selector, ops, null);
-            Utils.SalvaSuFileHandleSIGTERM(ex); //Gestisce il salvatagio a sigterm e salvataggio automatico
-            gestoreSfide();//Gestisce il th che fa pooling sulla sfide in corso per vedere se sono terminate
+            //Gestisce il th che fa pooling sulla sfide in corso per vedere se sono terminate
+            WorkerSfida workerSfida = new WorkerSfida();
+            Thread thGestoreSfide = new Thread(workerSfida);
+            thGestoreSfide.start();
+            Utils.SalvaSuFileHandleSIGTERM(ex, thGestoreSfide); //Gestisce il salvatagio a sigterm e salvataggio automatico
 
             while (true) {
                 selector.selectNow();
@@ -135,7 +137,7 @@ public class Server {
     public void messageParser(String message) {
         StringTokenizer tokenizedLine = new StringTokenizer(message);
         String pw, nickUtente, nickAmico;
-        if (socUser.getInPartita().get()) return; //se è in partita ignora le richieste di altri comandi!
+        if (socUser.getInPartita()) return; //se è in partita ignora le richieste di altri comandi!
 
         try {
             switch (tokenizedLine.nextToken()) {
@@ -282,16 +284,16 @@ public class Server {
         } catch (SocketTimeoutException e) {
             e.printStackTrace(); //Se scatta il timeout chiudo la connessione e notifico che non ho ricevuto risposta
             udpClient.close(); //Tolgo il flag che sono in partita per poter accettare future richieste
-            profiloUtente.setInPartita(new AtomicBoolean(false));
-            amico.setInPartita(new AtomicBoolean(false));
+            profiloUtente.setInPartita(false);
+            amico.setInPartita(false);
             throw new NessunaRispostaDiSfida("L'amico non ha dato risposta.");
         }
 
         udpClient.close(); //Chiudo la connessione udp se l'amico ha accettato la sfida
 
         if (msg.equals("no")) { //Se ha rifiutatato mi tolgo dallo stato della partita e notifico che ha rifiutato
-            profiloUtente.setInPartita(new AtomicBoolean(false));
-            amico.setInPartita(new AtomicBoolean(false));
+            profiloUtente.setInPartita(false);
+            amico.setInPartita(false);
             throw new SfidaRequestRefused("Ha rifiutato la sfida");
         }
     }
@@ -306,10 +308,10 @@ public class Server {
                 throw new FriendNotFound("L'utente che vuoi sfidare non è nella tua lista amici");
             Utente amico = ListaUtenti.getInstance().getUser(nickAmico);
             if (amico != null && !amico.isConnesso()) throw new FriendNotConnected("L'amico non è connesso");
-            if (amico.getInPartita().get()) throw new FriendIsAlreadyPlaying("L'amico è già in una partita");
+            if (amico.getInPartita()) throw new FriendIsAlreadyPlaying("L'amico è già in una partita");
             //Serve per evitare di ricevere richieste sovrapposte di sfida
-            profiloUtente.setInPartita(new AtomicBoolean(true));
-            amico.setInPartita(new AtomicBoolean(true)); //Setto che l'amico è in partita
+            profiloUtente.setInPartita(true);
+            amico.setInPartita(true); //Setto che l'amico è in partita
             sendUdpChallenge(nickUtente, profiloUtente, amico);//invia la richiesta di sfida su udp
             //Se l'amico ha accettato lo notifico scrivendo sul socket channel
             socChanClient.write(ByteBuffer.wrap((nickAmico + " ha accettato la sfida!" + "\n").getBytes(StandardCharsets.UTF_8)));
@@ -325,9 +327,9 @@ public class Server {
             Utils.log(String.format("%s ha sfidato %s (%s) , (%s)", nickUtente, nickAmico, Utils.getIpRemoteFromProfile(profiloUtente), Utils.getIpRemoteFromProfile(amico)));
 
         } catch (Exception e2) {
-            if (socUser.getInPartita().get()) socUser.setInPartita(new AtomicBoolean(false));
+            if (socUser.getInPartita()) socUser.setInPartita(false);
             Utente amico = ListaUtenti.getInstance().getUser(nickAmico);
-            if (amico != null && amico.getInPartita().get()) amico.setInPartita(new AtomicBoolean(false));
+            if (amico != null && amico.getInPartita()) amico.setInPartita(false);
             sendResponseToClient(e2.getMessage());
         }
     }
@@ -385,11 +387,5 @@ public class Server {
             leaderBoardWithOnlyUserANdScore.add(user.getNickname() + " " + user.getPunteggioTotale());
 
         return Storage.objectToJSON(leaderBoardWithOnlyUserANdScore);
-    }
-
-    private void gestoreSfide() { //Th che fa pooling sulla struttura delle sfide per notificare se è terminata
-        WorkerSfida workerSfida = new WorkerSfida();
-        Thread thGestoreSfide = new Thread(workerSfida);
-        thGestoreSfide.start();
     }
 }

@@ -6,7 +6,6 @@ import server.Utils;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Random;
 
 public class Sfida {
@@ -47,11 +46,11 @@ public class Sfida {
     }
 
     private void generaTraduzioni() {
-        for (Iterator<HashMap<String, String>> elm = this.paroleDaIndovinare.iterator(); elm.hasNext(); ) {
+        for (HashMap<String, String> elemItaEng : this.paroleDaIndovinare) {
             try {//Aggiungo le coppie della traduzione data dall'api con sendHttpRequest
-                HashMap<String, String> elemento = elm.next();
-                Object[] keys = elemento.keySet().toArray();
-                elemento.replace((String) keys[0], Utils.sendHttpRequest((String) keys[0]));
+                Object[] keys = elemItaEng.keySet().toArray();
+                elemItaEng.replace((String) keys[0], Utils.sendHttpRequest((String) keys[0]));
+                Utils.log(String.format("Sfida (%d): %s -> %s", this.idSfida, elemItaEng.keySet().toArray()[0], elemItaEng.values().toArray()[0]));
             } catch (IOException e) {
                 e.printStackTrace();
             }

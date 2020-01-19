@@ -65,7 +65,7 @@ public class Utils {
         return data.getResponseData().getTranslatedText();//Prendo solo il campo delle parola tradotta
     }
 
-    public static void SalvaSuFileHandleSIGTERM(ExecutorService ex) {
+    public static void SalvaSuFileHandleSIGTERM(ExecutorService ex, Thread thGestoreSfide) {
         Thread thread = new Thread(new Thread(() -> {
             while (!Thread.currentThread().isInterrupted()) {
                 try {//th che salva in automatico ogni X secondi l'oggetto degli utenti + partite nel file json
@@ -86,6 +86,7 @@ public class Utils {
             if (Settings.AUTO_SAVE_JSON) thread.interrupt();
             ex.shutdownNow();
             while (!ex.isTerminated()) ;
+            thGestoreSfide.interrupt();
             //Salvo su file ed esco
             Storage.writeObjectToJSONFile(Settings.JSON_FILENAME, ListaUtenti.getInstance().getHashListaUtenti());
             Utils.log("LOG: Salvataggio completato.");

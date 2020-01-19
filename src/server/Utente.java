@@ -22,13 +22,13 @@ public class Utente implements Serializable {
     @JsonIgnore
     private SelectionKey selKey; //Mi server per poter prendere il channel su cui scrivere
 
-    public AtomicBoolean getInPartita() {
-        if (inPartita == null) inPartita = new AtomicBoolean(false);
-        return inPartita;
+    public boolean getInPartita() {
+        if (this.inPartita == null) this.inPartita = new AtomicBoolean(false);
+        return inPartita.get();
     }
 
-    public void setInPartita(AtomicBoolean inPartita) {
-        this.inPartita = inPartita;
+    public void setInPartita(boolean inPartita) {
+        this.inPartita.set(inPartita);
     }
 
     public SelectionKey getSelKey() {
@@ -75,14 +75,17 @@ public class Utente implements Serializable {
     public Utente() {
         this.udpPort = Settings.UDP_PORT;
         this.connesso = false;
+        this.inPartita = new AtomicBoolean(false);
     }
 
     public Utente(SelectionKey selectionKey) {
         this.udpPort = Settings.UDP_PORT;
         this.selKey = selectionKey;
+        this.inPartita = new AtomicBoolean(false);
     }
 
-    public Utente(String nick, String password) {
+    public Utente(String nick, String password) { //lo usa il client
+        this.inPartita = new AtomicBoolean(false);
         this.nickname = nick;
         this.password = password;
     }
