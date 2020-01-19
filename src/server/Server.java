@@ -27,16 +27,16 @@ public class Server {
 
     public void start() {
         try {
-            ex = Executors.newFixedThreadPool(Settings.N_THREADS_THREAD_POOL);
-            serverSckChnl = ServerSocketChannel.open();
+            ex = Executors.newFixedThreadPool(Settings.N_THREADS_THREAD_POOL); //th delle partite
+            serverSckChnl = ServerSocketChannel.open(); //apro il server e lo metto non bloccante
             serverSckChnl.socket().bind(new InetSocketAddress(InetAddress.getByName("localhost"), Settings.TCP_PORT));
             serverSckChnl.configureBlocking(false);
 
-            int ops = serverSckChnl.validOps();
-            selector = Selector.open();
+            int ops = serverSckChnl.validOps();//Op valide
+            selector = Selector.open();//Apro il selector
             serverSckChnl.register(selector, ops, null);
-            Utils.SalvaSuFileHandleSIGTERM(ex);
-            gestoreSfide();
+            Utils.SalvaSuFileHandleSIGTERM(ex); //Gestisce il salvatagio a sigterm e salvataggio automatico
+            gestoreSfide();//Gestisce il th che fa pooling sulla sfide in corso per vedere se sono terminate
 
             while (true) {
                 selector.selectNow();
@@ -50,20 +50,20 @@ public class Server {
                     // rimuove la chiave dal Selected Set, ma non dal registered Set
                     try {
                         if (key.isAcceptable()) {
-                            keyAcceptableRegister(selector);
+                            keyAcceptableRegister(selector); //Se devo registrare
                         } else if (key.isReadable()) {
-                            keyRead(key);
+                            keyRead(key); //Se devo leggere
                         } else if (key.isWritable()) {
-                            keyWrite(key);
+                            keyWrite(key); //Se devo scrivere
                         }
-                    } catch (IOException ex2) {
+                    } catch (IOException ex2) { //Se il client crasha o chiude la connessione
                         ex2.printStackTrace();
                         Object[] objClient = (Object[]) key.attachment();
-                        if (objClient.length >= 2) {
+                        if (objClient.length >= 2) { //recupero se possibile l'oggetto utente associato
                             Utente uCrash = (Utente) objClient[1];
-                            crashClient(uCrash);
+                            crashClient(uCrash); //Gestisce la disconnessione improvvisa
                         }
-                        key.channel().close();
+                        key.channel().close(); //Chiudo il channel e cancello la chiave
                         key.cancel();
                     }
                 }
@@ -82,27 +82,27 @@ public class Server {
     }
 
     public void keyAcceptableRegister(Selector selector) throws IOException {
-        SocketChannel client = serverSckChnl.accept();
-        client.configureBlocking(false);
+        SocketChannel client = serverSckChnl.accept(); //metto il client in non blocking
+        client.configureBlocking(false); //Registro la chiave in lettura
         SelectionKey sk = client.register(selector, SelectionKey.OP_READ);
-        ByteBuffer msg = ByteBuffer.allocate(1024);
+        ByteBuffer msg = ByteBuffer.allocate(Settings.READ_BYTE_BUFFER_SIZE);
         ByteBuffer[] bfs = {msg};
         socUser = new Utente(sk);
         Object[] objClient = {bfs, socUser};
-        sk.attach(objClient);
+        sk.attach(objClient); //Associo una struttura dati contente buffer e obj utente per ogni client
         Utils.log(client.getRemoteAddress().toString());
     }
 
     public void keyWrite(SelectionKey key) throws IOException {
-        socChanClient = (SocketChannel) key.channel();
-        Object[] respObj = (Object[]) key.attachment();
+        socChanClient = (SocketChannel) key.channel(); //Recupero il socChannel
+        Object[] respObj = (Object[]) key.attachment(); //Recupero l'oggetto associato
         String response = (String) respObj[0];
         ByteBuffer respBuf = ByteBuffer.wrap(response.getBytes(StandardCharsets.UTF_8));
-        socChanClient.write(respBuf);
+        socChanClient.write(respBuf); //Scrivo sul channel
 
         if (!respBuf.hasRemaining()) {
-            respBuf.clear();
-            ByteBuffer msg = ByteBuffer.allocate(1024);
+            respBuf.clear(); //Pulisco e mi registro in lettura
+            ByteBuffer msg = ByteBuffer.allocate(Settings.READ_BYTE_BUFFER_SIZE);
             ByteBuffer[] bfs = {msg};
             Object[] objClient = {bfs, this.socUser};
             socChanClient.register(selector, SelectionKey.OP_READ, objClient);
@@ -111,26 +111,25 @@ public class Server {
 
     public void keyRead(SelectionKey key) throws IOException, BufferUnderflowException {
         socChanClient = (SocketChannel) key.channel();
-        Object[] objClient = (Object[]) key.attachment();
+        Object[] objClient = (Object[]) key.attachment(); //Recupero l'obj associato al client
         ByteBuffer[] bfs = (ByteBuffer[]) objClient[0];
-        long byteLeft = socChanClient.read(bfs);
+        long byteLeft = socChanClient.read(bfs); //leggo e controllo che non sia crashato
         if (byteLeft == -1) throw new IOException();
-        ByteBuffer msgBuf = bfs[0];
-        byte[] bytes;
+        ByteBuffer msgBuf = bfs[0]; //prendo il ByteBuffer dall'obj dell'attachment
 
         StringBuilder message = new StringBuilder();
 
-        msgBuf.flip();
-        bytes = new byte[msgBuf.remaining()];
+        msgBuf.flip(); //mi preparo per la lettura
+        byte[] bytes = new byte[msgBuf.remaining()];
         msgBuf.get(bytes);
-        message.append(new String(bytes));
-        msgBuf.clear();
-        byteLeft = socChanClient.read(msgBuf);
+        message.append(new String(bytes)); //Scrivo i byte dentro la stringa
+        msgBuf.clear(); //pulisco il buffer
+        byteLeft = socChanClient.read(msgBuf);  //controllo che non sia chiusa la connessione
         if (byteLeft == -1) throw new IOException();
 
-        this.socUser = (Utente) objClient[1];
+        this.socUser = (Utente) objClient[1]; //Recupero l'obj utente dall'attachment
 
-        if (!message.toString().isEmpty()) messageParser(message.toString());
+        if (!message.toString().isEmpty()) messageParser(message.toString()); //Gestisco i comandi letti
     }
 
     public void messageParser(String message) {
@@ -143,8 +142,8 @@ public class Server {
                 case "LOGIN":
                     nickUtente = tokenizedLine.nextToken();
                     pw = tokenizedLine.nextToken();
-                    String udpPort = tokenizedLine.nextToken();
-                    this.socUser.setUdpPort(Integer.parseInt(udpPort));
+                    String udpPort = tokenizedLine.nextToken(); //se è il login la terza parola è la porta
+                    this.socUser.setUdpPort(Integer.parseInt(udpPort)); //Setto la porta udp all'utente del soc
 
                     login(nickUtente, pw);
                     break;
@@ -194,13 +193,13 @@ public class Server {
             if (password == null || password.length() == 0) throw new IllegalArgumentException();
             if (ListaUtenti.getInstance().isConnected(nickUtente))
                 throw new UserAlreadyLoggedIn("L'utente è già loggato");
-
+            //ottiene il profilo da quelli caricati in memoria del json
             Utente profilo = ListaUtenti.getInstance().getUser(nickUtente);
 
             if (profilo == null) throw new UserDoesntExists("L'utente inserito non esiste");
             if (!profilo.getPassword().equals(password)) throw new WrongPassword("Password errata");
 
-            //associo il socket all'utente loggato
+            //Trovato il profilo che era nel json gli associo la SelectionKey e lo metto online
             ListaUtenti.getInstance().setConnected(nickUtente, true);
             profilo.setSelKey(this.socUser.getSelKey());
             profilo.setUdpPort(this.socUser.getUdpPort());
@@ -218,7 +217,7 @@ public class Server {
             if (nickUtente == null || nickUtente.length() == 0) throw new IllegalArgumentException();
             if (!ListaUtenti.getInstance().isConnected(nickUtente)) throw new UserAlreadyLoggedIn();
 
-            ListaUtenti.getInstance().setConnected(nickUtente, false);
+            ListaUtenti.getInstance().setConnected(nickUtente, false); //Lo disconnetto dagli utenti in memoria
             sendResponseToClient("Logout eseguito con successo");
             Utils.log(nickUtente + " logout!", this.socUser);
         } catch (Exception e) {
@@ -232,7 +231,7 @@ public class Server {
             if (nickAmico == null || nickAmico.length() == 0) throw new IllegalArgumentException("nickAmico arrato");
             if (nickUtente.equals(nickAmico)) throw new IllegalArgumentException("Non puoi essere amico di te stesso");
 
-            ListaUtenti connectedUSers = ListaUtenti.getInstance();
+            ListaUtenti connectedUSers = ListaUtenti.getInstance(); //l'amico deve essere online per aggiungerlo
             Utente profileRichiedente = connectedUSers.getUser(nickUtente);
             Utente profileAmico = connectedUSers.getUser(nickAmico);
 
@@ -256,7 +255,7 @@ public class Server {
             if (profilo == null) throw new UserDoesntExists("L'utente cercato non esiste");
 
             ConcurrentHashMap<String, String> listaAmici = profilo.getListaAmici();
-            String listaAmiciAsJson = Storage.objectToJSON(listaAmici);
+            String listaAmiciAsJson = Storage.objectToJSON(listaAmici); //invio la mia lista amici come json
             sendResponseToClient(listaAmiciAsJson);
             Utils.log(String.format("%s %s ha chiesto di vedere la lista amici di %s", this.socUser.getNickname(), Utils.getIpRemoteFromProfile(this.socUser), nickUtente), profilo);
         } catch (Exception e) {
@@ -266,30 +265,33 @@ public class Server {
 
     private void sendUdpChallenge(String nickUtente, Utente profiloUtente, Utente amico) throws IOException, SfidaRequestRefused, NessunaRispostaDiSfida {
         DatagramSocket udpClient = new DatagramSocket();
-        udpClient.setSoTimeout(Settings.UDP_TIMEOUT);
+        udpClient.setSoTimeout(Settings.UDP_TIMEOUT); //Setto il timeout di scadenza
 
         InetAddress address = InetAddress.getByName(Settings.HOST_NAME);
-        String msg = nickUtente;
-        byte[] msgSfida = msg.getBytes(StandardCharsets.UTF_8);
+        String msg = nickUtente; //Il mex sarò il mio nickname con il quale richiedo la sfida all'amico
+        byte[] msgSfida = msg.getBytes(StandardCharsets.UTF_8); //creo il buffer ed mando il pacchetto su udp port amico
         DatagramPacket packet = new DatagramPacket(msgSfida, msgSfida.length, address, amico.getUdpPort());
         udpClient.send(packet);
 
-        byte[] ack = new byte[2];
+        byte[] ack = new byte[2]; //Mi metto in ricezione per il mex di conferma/rifiuto (si/no)
         DatagramPacket rcvPck = new DatagramPacket(ack, ack.length);
 
         try {
-            udpClient.receive(rcvPck);
+            udpClient.receive(rcvPck); //Se ricevo qualcosa creo la stringa
             msg = new String(rcvPck.getData());
         } catch (SocketTimeoutException e) {
-            e.printStackTrace();
-            udpClient.close();
+            e.printStackTrace(); //Se scatta il timeout chiudo la connessione e notifico che non ho ricevuto risposta
+            udpClient.close(); //Tolgo il flag che sono in partita per poter accettare future richieste
+            profiloUtente.setInPartita(new AtomicBoolean(false));
+            amico.setInPartita(new AtomicBoolean(false));
             throw new NessunaRispostaDiSfida("L'amico non ha dato risposta.");
         }
 
-        udpClient.close();
+        udpClient.close(); //Chiudo la connessione udp se l'amico ha accettato la sfida
 
-        if (msg.equals("no")) {
+        if (msg.equals("no")) { //Se ha rifiutatato mi tolgo dallo stato della partita e notifico che ha rifiutato
             profiloUtente.setInPartita(new AtomicBoolean(false));
+            amico.setInPartita(new AtomicBoolean(false));
             throw new SfidaRequestRefused("Ha rifiutato la sfida");
         }
     }
@@ -305,12 +307,12 @@ public class Server {
             Utente amico = ListaUtenti.getInstance().getUser(nickAmico);
             if (amico != null && !amico.isConnesso()) throw new FriendNotConnected("L'amico non è connesso");
             if (amico.getInPartita().get()) throw new FriendIsAlreadyPlaying("L'amico è già in una partita");
-
+            //Serve per evitare di ricevere richieste sovrapposte di sfida
             profiloUtente.setInPartita(new AtomicBoolean(true));
+            amico.setInPartita(new AtomicBoolean(true)); //Setto che l'amico è in partita
             sendUdpChallenge(nickUtente, profiloUtente, amico);//invia la richiesta di sfida su udp
-            //sendResponseToClient(nickAmico + " ha accettato la sfida!");
+            //Se l'amico ha accettato lo notifico scrivendo sul socket channel
             socChanClient.write(ByteBuffer.wrap((nickAmico + " ha accettato la sfida!" + "\n").getBytes(StandardCharsets.UTF_8)));
-            amico.setInPartita(new AtomicBoolean(true));
 
             Sfida objSfida = new Sfida(profiloUtente.getNickname().hashCode() + new Random().nextInt(4));
             Partita partitaSfidante = new Partita(profiloUtente, objSfida);
@@ -333,7 +335,6 @@ public class Server {
     public void mostra_punteggio(String nickUtente) throws ClosedChannelException {
         try {
             if (nickUtente == null || nickUtente.length() == 0) throw new IllegalArgumentException("nickUtente arrato");
-
             Utente profilo = ListaUtenti.getInstance().getUser(nickUtente);
             if (profilo == null) throw new UserDoesntExists("L'utente cercato non esiste");
 
@@ -347,26 +348,11 @@ public class Server {
     public void mostra_classifica(String nickUtente) throws ClosedChannelException {
         try {
             if (nickUtente == null || nickUtente.length() == 0) throw new IllegalArgumentException("nickUtente errato");
-
             Utente profilo = ListaUtenti.getInstance().getUser(nickUtente);
             if (profilo == null) throw new UserDoesntExists("L'utente cercato non esiste");
 
-            ArrayList<Utente> classificaAmici = new ArrayList<>();
-            classificaAmici.add(profilo);
-
-            if (!profilo.getListaAmici().isEmpty()) { //se non ha amici ritorna solo il suo score saltando questo if
-                for (String keyAmico : profilo.getListaAmici().values()) {
-                    Utente amico = ListaUtenti.getInstance().getUser(keyAmico);
-                    classificaAmici.add(amico);
-                }
-                classificaAmici.sort(Comparator.comparing(Utente::getPunteggioTotale).reversed());
-            }
-            //Serve per levare tutte le info extra dell'utente
-            ArrayList<String> leaderBoardWithOnlyUserANdScore = new ArrayList<>();
-            for (Utente user : classificaAmici) {
-                leaderBoardWithOnlyUserANdScore.add(user.getNickname() + " " + user.getPunteggioTotale());
-            }
-            sendResponseToClient(Storage.objectToJSON(leaderBoardWithOnlyUserANdScore));
+            String leaderboardJson = generateLeaderBoardJSON(profilo);
+            sendResponseToClient(leaderboardJson);
             Utils.log(String.format("%s %s ha chiesto di vedere la classifica di %s", this.socUser.getNickname(), Utils.getIpRemoteFromProfile(this.socUser), nickUtente), profilo);
         } catch (Exception e) {
             sendResponseToClient(e.getMessage());
@@ -377,11 +363,31 @@ public class Server {
         if (testo == null) throw new IllegalArgumentException();
         if (socChanClient == null) throw new NullPointerException();
 
-        Object[] objResponse = {testo + "\n", this.socUser};
-        socChanClient.register(selector, SelectionKey.OP_WRITE, objResponse);
+        Object[] objResponse = {testo + "\n", this.socUser}; //Prepara il mex da scrivere con l'oggetto utente
+        socChanClient.register(selector, SelectionKey.OP_WRITE, objResponse); //Si registra il scrittura
     }
 
-    private void gestoreSfide() {
+    private String generateLeaderBoardJSON(Utente profilo) {
+        ArrayList<Utente> classificaAmici = new ArrayList<>();
+        classificaAmici.add(profilo); //Mi aggiungo alla lista degli amici su cui generare la classifica sorted
+
+        if (!profilo.getListaAmici().isEmpty()) { //se non ha amici ritorna solo il suo score saltando questo if
+            for (String keyAmico : profilo.getListaAmici().values()) {
+                Utente amico = ListaUtenti.getInstance().getUser(keyAmico);
+                classificaAmici.add(amico);
+            } //Sorta per punteggio più alto
+            classificaAmici.sort(Comparator.comparing(Utente::getPunteggioTotale).reversed());
+        }
+
+        //Serve per levare tutte le info extra dell'utente
+        ArrayList<String> leaderBoardWithOnlyUserANdScore = new ArrayList<>(); //Filtro per ottenere solo nome e punteggio
+        for (Utente user : classificaAmici)
+            leaderBoardWithOnlyUserANdScore.add(user.getNickname() + " " + user.getPunteggioTotale());
+
+        return Storage.objectToJSON(leaderBoardWithOnlyUserANdScore);
+    }
+
+    private void gestoreSfide() { //Th che fa pooling sulla struttura delle sfide per notificare se è terminata
         WorkerSfida workerSfida = new WorkerSfida();
         Thread thGestoreSfide = new Thread(workerSfida);
         thGestoreSfide.start();

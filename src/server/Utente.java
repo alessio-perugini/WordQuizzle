@@ -10,13 +10,17 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class Utente implements Serializable {
 
+    private long punteggioTotale;
+    private String nickname, password;
+    private ConcurrentHashMap<String, String> listaAmici;
     @JsonIgnore
     private int udpPort;
     @JsonIgnore
     private boolean connesso;
-    private long punteggioTotale;
-    private String nickname, password;
-    private ConcurrentHashMap<String, String> listaAmici;
+    @JsonIgnore
+    private AtomicBoolean inPartita;
+    @JsonIgnore
+    private SelectionKey selKey; //Mi server per poter prendere il channel su cui scrivere
 
     public AtomicBoolean getInPartita() {
         if (inPartita == null) inPartita = new AtomicBoolean(false);
@@ -27,9 +31,6 @@ public class Utente implements Serializable {
         this.inPartita = inPartita;
     }
 
-    @JsonIgnore
-    private AtomicBoolean inPartita;
-
     public SelectionKey getSelKey() {
         return selKey;
     }
@@ -37,9 +38,6 @@ public class Utente implements Serializable {
     public void setSelKey(SelectionKey selKey) {
         this.selKey = selKey;
     }
-
-    @JsonIgnore
-    private SelectionKey selKey;
 
     public String getNickname() {
         return nickname;

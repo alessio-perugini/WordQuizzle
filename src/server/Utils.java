@@ -18,9 +18,9 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 
 public class Utils {
-    public static String getParamsString(Map<String, String> params) {
+    private static String getParamsString(Map<String, String> params) {
         StringBuilder result = new StringBuilder();
-
+        //preparo la query associando nome variabile al valore
         for (Map.Entry<String, String> entry : params.entrySet()) {
             result.append(URLEncoder.encode(entry.getKey(), StandardCharsets.UTF_8));
             result.append("=");
@@ -28,32 +28,48 @@ public class Utils {
             result.append("&");
         }
 
-        String resultString = result.toString();
+        String resultString = result.toString(); //levo l'ultimo carattere &
         return resultString.length() > 0 ? resultString.substring(0, resultString.length() - 1) : resultString;
     }
 
     public static String sendHttpRequest(String parolaDaTradurre) throws IOException {
-        URL url = new URL(Settings.API_URL + "get?");
-        HttpURLConnection con = (HttpURLConnection) url.openConnection();
-        con.setRequestMethod("GET");
+        URL url = new URL(Settings.API_URL + "get?"); //URL + primo parametro costante della query per l'api
+        HttpURLConnection con = (HttpURLConnection) url.openConnection(); //Apro lo connessione
+        con.setRequestMethod("GET"); //Richiedo una connessione con il metodo GET
 
         Map<String, String> parameters = new HashMap<>();
-        parameters.put("q", parolaDaTradurre);
-        parameters.put("langpair", "it|en");
+        parameters.put("q", parolaDaTradurre); //parametro con la parola da traturre
+        parameters.put("langpair", "it|en"); //come devo tradurre la prole d'ingresso a quella d'uscita
 
         con.setDoOutput(true);
         DataOutputStream out = new DataOutputStream(con.getOutputStream());
-        out.writeBytes(Utils.getParamsString(parameters));
+        out.writeBytes(Utils.getParamsString(parameters)); //Costruisce la query e scrive sullo stream
         out.flush();
         out.close();
-        return getFullResponse(con);
+        return getFullResponse(con); //Leggo la risposta completa
+    }
+
+    private static String getFullResponse(HttpURLConnection con) throws IOException {
+        Reader streamReader;
+        //Controllo se ci sono errori
+        if (con.getResponseCode() > 299) streamReader = new InputStreamReader(con.getErrorStream());
+        else streamReader = new InputStreamReader(con.getInputStream());
+
+        BufferedReader in = new BufferedReader(streamReader);
+        String inputLine;
+        StringBuilder content = new StringBuilder(); //Costruisco il json leggendo per riga
+        while ((inputLine = in.readLine()) != null) content.append(inputLine);
+        in.close();
+
+        MyMemoryResponse data = Converter.fromJsonString(content.toString());//Costruisco dal json l'oggetto
+        return data.getResponseData().getTranslatedText();//Prendo solo il campo delle parola tradotta
     }
 
     public static void SalvaSuFileHandleSIGTERM(ExecutorService ex) {
         Thread thread = new Thread(new Thread(() -> {
             while (!Thread.currentThread().isInterrupted()) {
-                try {
-                    Thread.sleep(20000);
+                try {//th che salva in automatico ogni X secondi l'oggetto degli utenti + partite nel file json
+                    Thread.sleep(Settings.AUTO_SAVE_FREQUENCY);
                     System.out.println("/!\\ LOG: Salvataggio automatico in corso...");
                     Storage.writeObjectToJSONFile(Settings.JSON_FILENAME, ListaUtenti.getInstance().getHashListaUtenti());
                     System.out.println("/!\\ LOG: Salvataggio completato.");
@@ -63,40 +79,19 @@ public class Utils {
             }
         }));
 
-        if (Settings.AUTO_SAVE_JSON) thread.start();
-
+        if (Settings.AUTO_SAVE_JSON) thread.start(); //Se l'autosave è disabilitato non starta il thread
+        //Gestisco il SIGINT aspettando che finiscano le partite in corso
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             System.out.println("/!\\ Shutdown hook ran! /!\\");
             if (Settings.AUTO_SAVE_JSON) thread.interrupt();
             ex.shutdownNow();
             while (!ex.isTerminated()) ;
-
+            //Salvo su file ed esco
             Storage.writeObjectToJSONFile(Settings.JSON_FILENAME, ListaUtenti.getInstance().getHashListaUtenti());
             Utils.log("LOG: Salvataggio completato.");
         }));
     }
 
-    private static String getFullResponse(HttpURLConnection con) throws IOException {
-        Reader streamReader;
-
-        if (con.getResponseCode() > 299) {
-            streamReader = new InputStreamReader(con.getErrorStream());
-        } else {
-            streamReader = new InputStreamReader(con.getInputStream());
-        }
-
-        BufferedReader in = new BufferedReader(streamReader);
-        String inputLine;
-        StringBuilder content = new StringBuilder();
-        while ((inputLine = in.readLine()) != null) {
-            content.append(inputLine);
-        }
-
-        in.close();
-
-        MyMemoryResponse data = Converter.fromJsonString(content.toString());
-        return data.getResponseData().getTranslatedText();
-    }
 /*
     public static void printDizionarioDellaSfida(Sfida objSfida) {
         //objSfida.generaTraduzioni();
@@ -131,20 +126,20 @@ public class Utils {
     }
 
     public static void printArrayList(ArrayList<String> ls, String prefix) {
-        String toPrint = prefix + "";
-        for (String elemento : ls) toPrint += elemento + ", ";
-        toPrint = toPrint.substring(0, toPrint.length() - 2);
+        StringBuilder toPrint = new StringBuilder(prefix + "");
+        for (String elemento : ls) toPrint.append(elemento).append(", ");
+        toPrint = new StringBuilder(toPrint.substring(0, toPrint.length() - 2));
         System.out.println(toPrint);
     }
 
     public static void printListaAmici(HashMap<String, String> ls) {
         if (ls == null) return;
 
-        Iterator it = ls.values().iterator();
-        String toPrint = "Lista amici: ";
+        Iterator<String> it = ls.values().iterator();
+        StringBuilder toPrint = new StringBuilder("Lista amici: ");
         while (it.hasNext()) {
-            String amico = (String) it.next();
-            toPrint += (it.hasNext()) ? amico + ", " : amico;
+            String amico = it.next();
+            toPrint.append((it.hasNext()) ? amico + ", " : amico);
             it.remove();
         }
         System.out.println(toPrint);

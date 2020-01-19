@@ -17,9 +17,9 @@ public class WorkerSfida implements Runnable {
     @Override
     public void run() {
         while (!Thread.currentThread().isInterrupted()) {
-            Iterator it = lsSfide.getHashListaSfide().values().iterator();
+            Iterator<Sfida> it = lsSfide.getHashListaSfide().values().iterator();
             while (it.hasNext()) {
-                Sfida sfida = (Sfida) it.next();
+                Sfida sfida = it.next();
                 if (sfida == null) continue;
 
                 Partita p1 = sfida.getPartitaSfidante();
