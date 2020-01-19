@@ -1,11 +1,13 @@
 package client;
 
 import server.Settings;
+import server.Utils;
 
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.nio.charset.StandardCharsets;
+import java.sql.Timestamp;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class UdpListener implements Runnable {
@@ -44,6 +46,8 @@ public class UdpListener implements Runnable {
 
                 String nomeSfidante = new String(rcvPacket.getData()); //trasformo la risposta (il nome dello sfidante) in stringa
                 System.out.println(nomeSfidante.trim() + " ti vuole sfidare accetti (si/no): ");
+                Timestamp scadenza = Utils.addSecondsToATimeStamp(new Timestamp(System.currentTimeMillis()), Settings.UDP_TIMEOUT / 1000);
+                richiestaSfida.setDataScadenzaRichiesta(scadenza);
                 richiestaSfida.setSfidaToAnswer(new AtomicBoolean(true)); //Serve per gestire il prossimo input da console come risposta alla sfida
 
                 while (!Thread.currentThread().isInterrupted() && !this.sfidaAnswered.get())

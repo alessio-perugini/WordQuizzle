@@ -50,48 +50,49 @@ public class MainClass {
                 try {
                     StringTokenizer tokenizedLine = new StringTokenizer(scelta); //Server per spezzare la stringa per gli spazi
                     String currToken = tokenizedLine.nextToken();//prendo la prima stringa ottenuta dallo split dei spazi
-                    switch (currToken) {
-                        case "quit":
-                            quit = true;
-                            logout();
-                            client.close();//chiudo la connessione con il server
-                            break;
-                        case "registra_utente":
-                            registrazione(tokenizedLine);
-                            break;
-                        case "login":
-                            login(tokenizedLine);
-                            break;
-                        case "logout":
-                            logout();
-                            break;
-                        case "aggiungi_amico":
-                            aggiungiAmico(tokenizedLine);
-                            break;
-                        case "lista_amici":
-                            listaAmici();
-                            break;
-                        case "sfida":
-                            sfida(tokenizedLine);
-                            break;
-                        case "mostra_punteggio":
-                            punteggio();
-                            break;
-                        case "mostra_classifica":
-                            classifica();
-                            break;
-                        case "--help":
-                            help();
-                            break;
-                        default:
-                            if (sonoInPartita) { //se sono in partita game gestisce l'input della console
-                                game(currToken);
-                            } else if (reqSfida.getSfidaToAnswer().get()) { //se devo rispondere ad una req di sfida
-                                challangeRequest(currToken);
-                            } else {
+
+                    if (sonoInPartita) { //se sono in partita game gestisce l'input della console
+                        game(currToken);
+                    } else if (reqSfida.getSfidaToAnswer().get()) { //se devo rispondere ad una req di sfida
+                        challangeRequest(currToken);
+                    } else {
+                        switch (currToken) {
+                            case "quit":
+                                quit = true;
+                                logout();
+                                client.close();//chiudo la connessione con il server
+                                break;
+                            case "registra_utente":
+                                registrazione(tokenizedLine);
+                                break;
+                            case "login":
+                                login(tokenizedLine);
+                                break;
+                            case "logout":
+                                logout();
+                                break;
+                            case "aggiungi_amico":
+                                aggiungiAmico(tokenizedLine);
+                                break;
+                            case "lista_amici":
+                                listaAmici();
+                                break;
+                            case "sfida":
+                                sfida(tokenizedLine);
+                                break;
+                            case "mostra_punteggio":
+                                punteggio();
+                                break;
+                            case "mostra_classifica":
+                                classifica();
+                                break;
+                            case "--help":
+                                help();
+                                break;
+                            default:
                                 System.out.println("Comando non trovato, per la lista di comanda digitare (--help)");
-                            }
-                            break;
+                                break;
+                        }
                     }
                 } catch (NoSuchElementException nse) {
                     System.out.println(nse.getMessage());
@@ -144,6 +145,13 @@ public class MainClass {
     }
 
     private static void challangeRequest(String currToken) throws IOException {
+        if (Utils.isGivenTimeExpired(reqSfida.getDataScadenzaRichiesta())) {
+            udpSrv.setRispostaSfida("xx");
+            sonoInPartita = false;
+            System.out.println("Tempo per la risposta scaduto");
+            return;
+        }
+
         if (currToken.equals("si")) {
             udpSrv.setRispostaSfida("si");//risultato che deve inoltrare il server udp al client udp
             sonoInPartita = true; //I prossimi input da console saranno gestiti dalla func game()
@@ -153,6 +161,8 @@ public class MainClass {
             udpSrv.setRispostaSfida("no");//risultato che deve inoltrare il server udp al client udp
             System.out.println("Sfida rifiutata");
             sonoInPartita = false;
+        } else {
+            System.out.println("Risposta non valida digita (si/no)");
         }
     }
 
