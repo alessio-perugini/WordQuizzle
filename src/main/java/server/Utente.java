@@ -9,7 +9,10 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * Gestisce tutte le info dell'utente quali il punteggio totale di ogni partita effettuata
+ * Gestisce tutte le info dell'utente quali il punteggio totale di ogni partita effettuata, se è loggato, la porta udp
+ * la lista degli amici e la Selectionkey che verrà utilizzata dal threadpartita per gestire la comunicazione con
+ * il gioco. La lista amici e la variabile inPartita devono essere garantite mutue esclusive in quanto più thread possono
+ * accedervi ed effettuare modifiche.
  */
 public class Utente implements Serializable {
 
@@ -81,18 +84,34 @@ public class Utente implements Serializable {
         this.inPartita = new AtomicBoolean(false);
     }
 
+    /**
+     * Costruttore che inizializza udp port, partita e selectionKey. Usato nelal fase di registrazione del selector
+     *
+     * @param selectionKey
+     */
     public Utente(SelectionKey selectionKey) {
         this.udpPort = Settings.UDP_PORT;
         this.selKey = selectionKey;
         this.inPartita = new AtomicBoolean(false);
     }
 
+    /**
+     * Costruttore che inizilizza solo nick e pw. Utilizzato dal client
+     *
+     * @param nick
+     * @param password
+     */
     public Utente(String nick, String password) { //lo usa il client
         this.inPartita = new AtomicBoolean(false);
         this.nickname = nick;
         this.password = password;
     }
 
+    /**
+     * Aggiungi amico alla lista
+     *
+     * @param amico
+     */
     public synchronized void addFriend(String amico) {
         if (amico == null || amico.equals("")) throw new IllegalArgumentException("Nome amico non valido");
         if (listaAmici == null) listaAmici = new ConcurrentHashMap<>();
@@ -101,12 +120,23 @@ public class Utente implements Serializable {
         listaAmici.putIfAbsent(amico, amico);
     }
 
-    public boolean isFriend(String amico) {
+    /**
+     * Controlla se il nickname passato per param è presente nella lista amici
+     *
+     * @param amico
+     * @return
+     */
+    public synchronized boolean isFriend(String amico) {
         if (amico == null || amico.equals("")) throw new IllegalArgumentException("Nome amico non valido");
         if (listaAmici == null) listaAmici = new ConcurrentHashMap<>();
         return (listaAmici.get(amico) != null);
     }
 
+    /**
+     * Aggiungi il punteggio della partita al punteggio totale
+     *
+     * @param punteggio
+     */
     public void addPunteggioPartita(int punteggio) {
         this.punteggioTotale += punteggio;
     }

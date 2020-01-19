@@ -6,6 +6,14 @@ import server.gamelogic.Sfida;
 
 import java.util.Iterator;
 
+/**
+ * Gestisce la terminazione di una partita dovuta alla scadenza o al termine anticipato della sfida. Fa pooling sulla
+ * ListaSfide e controlla che se è finito il tempo ad entrambi i giocatori notifica ad entrambi chi a vinto.
+ * Se uno dei 2 giocatori non risponde all'ultimo messaggio del server dopo che è scaduto il tempo, questo consente di
+ * liberare l'altro giocatore che ha terminato prima della fine, notificandolo così della eventuale vittoria e
+ * liberandolo dalla read dell'esito della partita. Se l'utente non ha finito tutte le risposte in tempo mando 1 sola
+ * write che contiene statistiche della partita + esito finale.
+ */
 public class WorkerSfida implements Runnable {
     ListaSfide lsSfide;
 
@@ -54,6 +62,11 @@ public class WorkerSfida implements Runnable {
         }
     }
 
+    /**
+     * Se l'utente ha finito tutte le risposte in tempo mando le statisiche della partita
+     *
+     * @param p
+     */
     private void sendStatsIfNotEndedBeforeExpire(Partita p) {
         if (p.isFinita()) return;
         p.setFinita(true);

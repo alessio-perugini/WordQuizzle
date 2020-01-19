@@ -20,7 +20,15 @@ import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+/**
+ * Contiene alcuni metodi per facilitare la lettura del codice nella classi in cui richiamano le funzioni qui presenti
+ */
 public class Utils {
+
+    /**
+     * Controlla se esiste il file del dizionare. In caso contrario prende dall'enum alcuni nomi e crea un file con
+     * quelli.
+     */
     public static void checkDictionaryFile() {
         String filename = Settings.FILE_DIZIONARIO;
 
@@ -45,10 +53,16 @@ public class Utils {
                 }
             } catch (Exception e) {
                 e.printStackTrace();
-            }            //fe.printStackTrace();
+            }
         }
     }
 
+    /**
+     * Dai parametri da inserire all'api li trasforma nella query
+     *
+     * @param params
+     * @return stringa che sarebbe la query dell'url
+     */
     private static String getParamsString(Map<String, String> params) {
         StringBuilder result = new StringBuilder();
         //preparo la query associando nome variabile al valore
@@ -63,6 +77,13 @@ public class Utils {
         return resultString.length() > 0 ? resultString.substring(0, resultString.length() - 1) : resultString;
     }
 
+    /**
+     * Invia la richiesta http utilizzata per l'api rest e ritorna in caso positivo tutto il json della risposta
+     *
+     * @param parolaDaTradurre
+     * @return il json del'api
+     * @throws IOException
+     */
     public static String sendHttpRequest(String parolaDaTradurre) throws IOException {
         URL url = new URL(Settings.API_URL + "get?"); //URL + primo parametro costante della query per l'api
         HttpURLConnection con = (HttpURLConnection) url.openConnection(); //Apro lo connessione
@@ -80,6 +101,14 @@ public class Utils {
         return getFullResponse(con); //Leggo la risposta completa
     }
 
+    /**
+     * Ottiene la risposta completa dell'http. Controlla che non ci siano codice d'errore. In caso non ci siano leggo
+     * il contenuto che contiene il json della risposta http.
+     *
+     * @param con
+     * @return
+     * @throws IOException
+     */
     private static String getFullResponse(HttpURLConnection con) throws IOException {
         Reader streamReader;
         //Controllo se ci sono errori
@@ -96,6 +125,13 @@ public class Utils {
         return data.getResponseData().getTranslatedText();//Prendo solo il campo delle parola tradotta
     }
 
+    /**
+     * Gestisce il salvataggio automatico del file se settato dalle impostazioni e gestisce il segnale di shutdown
+     * aspettando che finsicano le sfide in esecuzione ed una volta terminate effettua l'ultimo salvataggio su file.
+     *
+     * @param ex             threadpool da fermare (quello delle partite)
+     * @param thGestoreSfide
+     */
     public static void SalvaSuFileHandleSIGTERM(ExecutorService ex, Thread thGestoreSfide) {
         Thread thread = new Thread(new Thread(() -> {
             while (!Thread.currentThread().isInterrupted()) {
@@ -124,30 +160,34 @@ public class Utils {
         }));
     }
 
-/*
-    public static void printDizionarioDellaSfida(Sfida objSfida) {
-        //objSfida.generaTraduzioni();
-        for (Iterator<HashMap<String, String>> elm = objSfida.getParoleDaIndovinare().iterator(); elm.hasNext(); ) {
-            HashMap<String, String> words = elm.next();
-            Object[] keySet = (Object[]) words.keySet().toArray();
-            System.out.println((String) keySet[0] + " -> " + words.get(keySet[0]));
-        }
-    }*/
-
+    /**
+     * Aggiungi dei secondi ad un timestamp
+     *
+     * @param start
+     * @param sec
+     * @return il timestamp con i secondi aggiunti
+     */
     public static Timestamp addSecondsToATimeStamp(Timestamp start, int sec) {
         return new Timestamp(start.getTime() + (sec * 1000L));
     }
 
+    /**
+     * Servver per capire se l'orario passato è scaduto oppure no
+     *
+     * @param end
+     * @return Se l'orario passato per parametro è > di now ritorna false.
+     */
     public static boolean isGivenTimeExpired(Timestamp end) {
         Timestamp now = new Timestamp(System.currentTimeMillis());
         return end.before(now);
     }
 
-    public static void log(String message) {
-        String ora = new Timestamp(System.currentTimeMillis()).toLocalDateTime().toString();
-        System.out.println("[" + ora + "] " + message);
-    }
-
+    /**
+     * Ottiene il emote address dell'utente
+     *
+     * @param user
+     * @return remote address dell'utente
+     */
     public static String getIpRemoteFromProfile(Utente user) {
         try {
             return (user != null) ? ((SocketChannel) user.getSelKey().channel()).getRemoteAddress().toString() : "";
@@ -157,6 +197,12 @@ public class Utils {
         return "";
     }
 
+    /**
+     * Stampa l'arraylist di stringhe. (Utilizzato come log per vedere la classifica)
+     *
+     * @param ls
+     * @param prefix
+     */
     public static void printArrayList(ArrayList<String> ls, String prefix) {
         StringBuilder toPrint = new StringBuilder(prefix + "");
         for (String elemento : ls) toPrint.append(elemento).append(", ");
@@ -164,6 +210,11 @@ public class Utils {
         System.out.println(toPrint);
     }
 
+    /**
+     * Stampa a schermo il value della hashmap e lo concatena con una "," (utilizzato per printare la lista amici)
+     *
+     * @param ls
+     */
     public static void printListaAmici(HashMap<String, String> ls) {
         if (ls == null) return;
 
@@ -177,7 +228,22 @@ public class Utils {
         System.out.println(toPrint);
     }
 
+    /**
+     * Printa a schermo con l'orario corrente il messaggio passato per param
+     *
+     * @param message
+     */
+    public static void log(String message) {
+        String ora = new Timestamp(System.currentTimeMillis()).toLocalDateTime().toString();
+        System.out.println("[" + ora + "] " + message);
+    }
 
+    /**
+     * printa a schermo con l'orario corrente + l'ip dell'utente, il messaggio passato per param
+     *
+     * @param message
+     * @param user
+     */
     public static void log(String message, Utente user) {
         try {
             String ip = getIpRemoteFromProfile(user);
