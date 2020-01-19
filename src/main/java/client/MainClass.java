@@ -53,6 +53,7 @@ public class MainClass {
                     switch (currToken) {
                         case "quit":
                             quit = true;
+                            logout();
                             client.close();//chiudo la connessione con il server
                             break;
                         case "registra_utente":
@@ -194,15 +195,15 @@ public class MainClass {
     public static void logout() {
         try {
             if (profiloLoggato == null) {
-                System.out.println("Logout già effetuato");
+                if (!quit) System.out.println("Logout già effetuato");
                 return;
             }
 
             String esito = scriviLeggi("LOGOUT " + profiloLoggato.getNickname());
-            printServerResponse(esito);
+            if (!quit) printServerResponse(esito);
             if (esito.equals("Logout eseguito con successo")) profiloLoggato = null;
         } catch (NoSuchElementException e) {
-            System.out.println("logout effettua il logout");
+            if (!quit) System.out.println("Errore durante il loguout ritenta");
         }
     }
 

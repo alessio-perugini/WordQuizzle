@@ -50,7 +50,7 @@ public class Storage {
             FileChannel.open(Paths.get(path), StandardOpenOption.READ);
         } catch (IOException fe) {//Se non esiste crea il file (path), con dentro un json vuoto
             writeObjectToJSONFile(path, new ConcurrentHashMap<String, Utente>());
-            fe.printStackTrace();
+            //fe.printStackTrace();
         }
 
         try (FileInputStream in = new FileInputStream(path); //Creo l'input stream del file
@@ -63,11 +63,10 @@ public class Storage {
             }
 
             final ObjectMapper mapper = new ObjectMapper(); //leggo i byte e ricreo l'oggetto
-            ConcurrentHashMap<String, Utente> ls = mapper.reader()
+            return mapper.reader()
                     .forType(new TypeReference<ConcurrentHashMap<String, Utente>>() {
                     })
-                    .readValue(out.toByteArray());
-            return ls;
+                    .<ConcurrentHashMap<String, Utente>>readValue(out.toByteArray());
         } catch (Exception ec) {
             ec.printStackTrace();
         }

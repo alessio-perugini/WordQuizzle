@@ -2,22 +2,53 @@ package server;
 
 import server.MyMemoryAPI.Converter;
 import server.MyMemoryAPI.MyMemoryResponse;
+import server.gamelogic.DefaultWords;
 import server.storage.Storage;
 
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.nio.channels.FileChannel;
 import java.nio.channels.SocketChannel;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class Utils {
+    public static void checkDictionaryFile() {
+        String filename = Settings.FILE_DIZIONARIO;
+
+        try {//Controlla se esiste il file (path)
+            FileChannel.open(Paths.get(filename), StandardOpenOption.READ);
+        } catch (IOException fe) {//Se non esiste crea il file (path), con dentro un json vuoto
+            try {
+                File file = new File(filename);
+                file.createNewFile();
+
+                List<String> enumNames = Stream.of(DefaultWords.values())
+                        .map(Enum::name)
+                        .collect(Collectors.toList());
+
+                try (FileOutputStream out = new FileOutputStream(filename)) {
+                    for (String elm : enumNames) {
+                        elm += "\n";
+                        out.write(elm.getBytes());
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }            //fe.printStackTrace();
+        }
+    }
+
     private static String getParamsString(Map<String, String> params) {
         StringBuilder result = new StringBuilder();
         //preparo la query associando nome variabile al valore

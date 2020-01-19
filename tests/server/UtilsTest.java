@@ -1,10 +1,8 @@
 package server;
 
 import org.junit.jupiter.api.Test;
-import server.gamelogic.Sfida;
 
 import java.sql.Timestamp;
-import java.text.ParseException;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -12,6 +10,7 @@ class UtilsTest {
 
     @Test
     void printDizionarioDellaSfida() {
+        Utils.checkDictionaryFile();
     }
 
     @Test

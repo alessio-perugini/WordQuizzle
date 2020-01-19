@@ -39,8 +39,8 @@ public class ListaSfide {
         hashListaSfide.remove(sfida);
     }
 
-    public Sfida getSfida(String key) {
-        if (key == null || key.length() == 0) throw new IllegalArgumentException();
+    public Sfida getSfida(Integer key) {
+        if (key == null || key == 0) throw new IllegalArgumentException();
         if (hashListaSfide.isEmpty()) throw new UserDoesntExists();
 
         return hashListaSfide.get(key);

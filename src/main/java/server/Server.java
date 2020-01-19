@@ -59,7 +59,7 @@ public class Server {
                             keyWrite(key); //Se devo scrivere
                         }
                     } catch (IOException ex2) { //Se il client crasha o chiude la connessione
-                        ex2.printStackTrace();
+                        //ex2.printStackTrace();
                         Object[] objClient = (Object[]) key.attachment();
                         if (objClient.length >= 2) { //recupero se possibile l'oggetto utente associato
                             Utente uCrash = (Utente) objClient[1];
