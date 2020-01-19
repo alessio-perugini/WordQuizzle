@@ -137,9 +137,12 @@ public class Main {
         try {
             write(currToken); //invia la parola tradotta
             String srvResp = read(); //legge nuove parole o l'esito della partita
-            System.out.println(srvResp);
+            String toPrint = srvResp; //il # serve per capire se è l'ultimo mex di sfida
+            if (srvResp.contains("#")) toPrint = toPrint.replace("#", "");
+            System.out.println(toPrint);
             if (srvResp.contains("Hai tradotto correttamente")) { //è l'ultimo messaggio prima di sapere se ho vinto
-                printServerResponse(read()); //mi metto in lettura per sapere se ho vinto o perso!
+                if (!srvResp.contains("#"))
+                    printServerResponse(read()); //mi metto in lettura per sapere se ho vinto o perso!
                 sonoInPartita = false;
             }
         } catch (Exception e) {
@@ -328,6 +331,7 @@ public class Main {
     }
 
     private static void printServerResponse(String msg) {
+        if (msg.contains("#")) msg = msg.replace("#", "");
         System.out.println(msg);
     }
 }

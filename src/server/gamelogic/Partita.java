@@ -23,10 +23,14 @@ public class Partita implements Runnable {
     public Timestamp inizioPartita;
 
     public boolean isFinita() {
-        return finita;
+        return finita.get();
     }
 
-    public boolean finita; //Se la partita è conclusa
+    public void setFinita(boolean finita) {
+        this.finita = new AtomicBoolean(finita);
+    }
+
+    public AtomicBoolean finita; //Se la partita è conclusa
 
     public Timestamp getFinePartita() {
         return finePartita;
@@ -49,7 +53,7 @@ public class Partita implements Runnable {
     public Partita(Utente user, Sfida sfida) {
         this.paroleDaIndovinare = sfida.getParoleDaIndovinare();
         this.user = user;
-        this.finita = false;
+        this.finita = new AtomicBoolean(false);
         this.paroleTotali = this.paroleDaIndovinare.size();
         this.sbagliate = 0;
         this.corrette = 0;
@@ -60,10 +64,11 @@ public class Partita implements Runnable {
         this.client = (SocketChannel) user.getSelKey().channel();
     }
 
+    private int i;
     @Override
     public void run() {
         try {
-            int i = 0;
+            i = 0;
             String prefix = String.format("Via alla sfida di traduzione!\nAvete %d secondi per tradurre correttamente %d parole.\n", Settings.DURATA_PARTITA_SEC, this.paroleTotali);
             do {
                 String parolaDaTradurre = ((String) paroleDaIndovinare.get(i).keySet().toArray()[0]);
@@ -81,18 +86,31 @@ public class Partita implements Runnable {
                 }
             } while (!Utils.isGivenTimeExpired(this.finePartita) && (++i < this.paroleTotali));
 
-            this.nonRisposte = this.paroleTotali - i;
-            this.punteggioPartita = (this.corrette * 2) - this.sbagliate;
-            user.addPunteggioPartita(this.punteggioPartita); //Aggiungi il punteggio all'utente
+            if (!finita.get()) {
+                this.nonRisposte = this.paroleTotali - i;
+                this.punteggioPartita = (this.corrette * 2) - this.sbagliate;
+                user.addPunteggioPartita(this.punteggioPartita); //Aggiungi il punteggio all'utente
 
-            String esitoPartita = String.format("Hai tradotto correttamente %d parole, ne hai sbagliate %d e non risposta a %d.\nHai totalizzato %d punti.", this.corrette, this.sbagliate, this.nonRisposte, this.punteggioPartita);
-            sendResponseToClient(esitoPartita);
-            this.finita = true;
+                String esitoPartita = String.format("Hai tradotto correttamente %d parole, ne hai sbagliate %d e non risposta a %d.\nHai totalizzato %d punti.", this.corrette, this.sbagliate, this.nonRisposte, this.punteggioPartita);
+
+                sendResponseToClient(esitoPartita);
+            }
+
+            setFinita(true);
         } catch (Exception ecc) {
-            this.finita = true;
+            setFinita(true);
             user.setInPartita(new AtomicBoolean(false));
             ecc.printStackTrace();
         }
+    }
+
+    public String esitoPartita() {
+        this.nonRisposte = this.paroleTotali - i;
+        this.punteggioPartita = (this.corrette * 2) - this.sbagliate;
+        user.addPunteggioPartita(this.punteggioPartita); //Aggiungi il punteggio all'utente
+
+        String esitoPartita = String.format("Hai tradotto correttamente %d parole, ne hai sbagliate %d e non risposta a %d.\nHai totalizzato %d punti.", this.corrette, this.sbagliate, this.nonRisposte, this.punteggioPartita);
+        return esitoPartita;
     }
 
     private String readResponse() throws IOException {
