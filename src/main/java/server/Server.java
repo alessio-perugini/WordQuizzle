@@ -17,6 +17,17 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+/**
+ * Server tcp che gestisce i client, il salvataggio e le partite. Utilizza un ThreadPool per gestire le partite degli
+ * utenti. Un thread WorkerSfida che fa pooling sulla ListaSfide e se vede che una sfida è scaduta notifica i client
+ * e lo leva dalla lista delle sfide in esecuzione. Utilizza un selector per gestire i client che si collegano. Se un
+ * utente sta sfidando o riceve la sfida viene settata una variabile che mostra l'utente in gioco in maniera preventiva
+ * da scartare così eventuali richieste che altri utenti possono mandare a questi in attesa della risposta di sfida,
+ * evitando così di far rimanere il client in stati inconsistenti. Ad ogni client viene dato un attachment che ha l'obj
+ * Utente con il suo selection key e un ByteBuffer così da garantirmi ogni qualvolta effettuo delle op su di loro che
+ * si sta lavorando su dati consistenti. La variabile socUser viene costantemente cambiata e punta a l'attachment del
+ * client scelto dal selector in quel momento.
+ */
 public class Server {
     private Utente socUser;
     ExecutorService ex;
@@ -24,6 +35,9 @@ public class Server {
     SocketChannel socChanClient;
     ServerSocketChannel serverSckChnl;
 
+    /**
+     * Fa partire il server tcp il thread che gestisce il sigint e il thread che fa pooling sulle sfide ed il selector
+     */
     public void start() {
         try {
             ex = Executors.newFixedThreadPool(Settings.N_THREADS_THREAD_POOL); //th delle partite
@@ -75,6 +89,11 @@ public class Server {
         }
     }
 
+    /**
+     * Se il client era offline notifica che ha chiuso la connessione, se era online vuold dire che è crashato
+     *
+     * @param uCrash utente che si è disconnesso
+     */
     public void crashClient(Utente uCrash) {
         if (uCrash != null && uCrash.getNickname() != null) {
             boolean crashed = (uCrash.isConnesso());
@@ -83,6 +102,12 @@ public class Server {
         }
     }
 
+    /**
+     * Registra un nuovo client al selector
+     *
+     * @param selector
+     * @throws IOException
+     */
     public void keyAcceptableRegister(Selector selector) throws IOException {
         SocketChannel client = serverSckChnl.accept(); //metto il client in non blocking
         client.configureBlocking(false); //Registro la chiave in lettura
@@ -95,6 +120,12 @@ public class Server {
         Utils.log(client.getRemoteAddress().toString());
     }
 
+    /**
+     * gestisce la scrittura del channel
+     *
+     * @param key
+     * @throws IOException
+     */
     public void keyWrite(SelectionKey key) throws IOException {
         socChanClient = (SocketChannel) key.channel(); //Recupero il socChannel
         Object[] respObj = (Object[]) key.attachment(); //Recupero l'oggetto associato
@@ -111,6 +142,13 @@ public class Server {
         }
     }
 
+    /**
+     * Gesce la lettuar del channel
+     *
+     * @param key
+     * @throws IOException
+     * @throws BufferUnderflowException
+     */
     public void keyRead(SelectionKey key) throws IOException, BufferUnderflowException {
         socChanClient = (SocketChannel) key.channel();
         Object[] objClient = (Object[]) key.attachment(); //Recupero l'obj associato al client
@@ -134,6 +172,12 @@ public class Server {
         if (!message.toString().isEmpty()) messageParser(message.toString()); //Gestisco i comandi letti
     }
 
+    /**
+     * Fa il parsing dei comandi che inva il client. Se l'utente è in partita ignora i comandi che riceve da quel client
+     * poichè è gestito dal thread della partita.
+     *
+     * @param message
+     */
     public void messageParser(String message) {
         StringTokenizer tokenizedLine = new StringTokenizer(message);
         String pw, nickUtente, nickAmico;
@@ -189,6 +233,14 @@ public class Server {
         }
     }
 
+    /**
+     * effettua il login dell'utente, viene cercato nella lista degli utenti registrati e se presente associa la sua key
+     * udp port all'oggetto caricato. E prendo il puntatore a questo aggiornato con i dettagli della connessione.
+     *
+     * @param nickUtente
+     * @param password
+     * @throws IOException
+     */
     public void login(String nickUtente, String password) throws IOException {
         try {
             if (nickUtente == null || nickUtente.length() == 0) throw new IllegalArgumentException();
@@ -214,6 +266,12 @@ public class Server {
         }
     }
 
+    /**
+     * effettuo il logout dell'utente e lo setto offline nella lista degli utenti caricati in memoria
+     *
+     * @param nickUtente
+     * @throws ClosedChannelException
+     */
     public void logout(String nickUtente) throws ClosedChannelException {
         try {
             if (nickUtente == null || nickUtente.length() == 0) throw new IllegalArgumentException();
@@ -227,6 +285,13 @@ public class Server {
         }
     }
 
+    /**
+     * Aggiunge un amico alla propria lista amici
+     *
+     * @param nickUtente
+     * @param nickAmico
+     * @throws ClosedChannelException
+     */
     public void aggiungi_amico(String nickUtente, String nickAmico) throws ClosedChannelException {
         try {
             if (nickUtente == null || nickUtente.length() == 0) throw new IllegalArgumentException();
@@ -249,6 +314,12 @@ public class Server {
         }
     }
 
+    /**
+     * Mostra la propria lista amici inviandola come json
+     *
+     * @param nickUtente
+     * @throws ClosedChannelException
+     */
     public void lista_amici(String nickUtente) throws ClosedChannelException {
         try {
             if (nickUtente == null || nickUtente.length() == 0) throw new IllegalArgumentException("nickUtente arrato");
@@ -265,6 +336,19 @@ public class Server {
         }
     }
 
+    /**
+     * Gestisce la richiesta di sfida che viene effettuata tramite udp. C'è un timer che se scatta vuol dire che non è
+     * stata data risposta e scarta la sfida. In modo preventivo metto sia l'amico che l'utente sfidante in modalità
+     * partita così da scartare possibili richieste di sfida da parte di altri utenti a questi 2, finchè non ho un esito.
+     * Che può essere dipeso dal timer o dal si/no del client.
+     *
+     * @param nickUtente    il nome di chi chiede la sfida
+     * @param profiloUtente profilo del richidente sfida
+     * @param amico         profilo dell'amico
+     * @throws IOException
+     * @throws SfidaRequestRefused
+     * @throws NessunaRispostaDiSfida
+     */
     private void sendUdpChallenge(String nickUtente, Utente profiloUtente, Utente amico) throws IOException, SfidaRequestRefused, NessunaRispostaDiSfida {
         DatagramSocket udpClient = new DatagramSocket();
         udpClient.setSoTimeout(Settings.UDP_TIMEOUT); //Setto il timeout di scadenza
@@ -298,6 +382,14 @@ public class Server {
         }
     }
 
+    /**
+     * Gestisce al sfida dei 2 utenti. Viene creato l'oggetto sfida e i 2 oggetti Partita. Viene realizzate una
+     * associazione tra questi e poi i thread partita vengono assegnati al threadpool e lancaiti.
+     *
+     * @param nickUtente
+     * @param nickAmico
+     * @throws IOException
+     */
     public void sfida(String nickUtente, String nickAmico) throws IOException {
         try {
             if (nickUtente == null || nickUtente.length() == 0) throw new IllegalArgumentException("nickUtente arrato");
@@ -334,6 +426,12 @@ public class Server {
         }
     }
 
+    /**
+     * Mostra il puntegio del giocatore
+     *
+     * @param nickUtente
+     * @throws ClosedChannelException
+     */
     public void mostra_punteggio(String nickUtente) throws ClosedChannelException {
         try {
             if (nickUtente == null || nickUtente.length() == 0) throw new IllegalArgumentException("nickUtente arrato");
@@ -347,6 +445,12 @@ public class Server {
         }
     }
 
+    /**
+     * Mostra la classifica inviata come json
+     *
+     * @param nickUtente
+     * @throws ClosedChannelException
+     */
     public void mostra_classifica(String nickUtente) throws ClosedChannelException {
         try {
             if (nickUtente == null || nickUtente.length() == 0) throw new IllegalArgumentException("nickUtente errato");
@@ -361,6 +465,12 @@ public class Server {
         }
     }
 
+    /**
+     * invia la risposta al client registrando una chiava in scrittura sul selector
+     *
+     * @param testo
+     * @throws ClosedChannelException
+     */
     private void sendResponseToClient(String testo) throws ClosedChannelException {
         if (testo == null) throw new IllegalArgumentException();
         if (socChanClient == null) throw new NullPointerException();
@@ -369,6 +479,12 @@ public class Server {
         socChanClient.register(selector, SelectionKey.OP_WRITE, objResponse); //Si registra il scrittura
     }
 
+    /**
+     * Genera la classifica amici filtrando solo i campi utili e creando poi il json
+     *
+     * @param profilo
+     * @return json della classifica amici
+     */
     private String generateLeaderBoardJSON(Utente profilo) {
         ArrayList<Utente> classificaAmici = new ArrayList<>();
         classificaAmici.add(profilo); //Mi aggiungo alla lista degli amici su cui generare la classifica sorted

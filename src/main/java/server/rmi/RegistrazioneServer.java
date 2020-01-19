@@ -7,6 +7,9 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 
+/**
+ * Server RMI per la registrazione dell'utente
+ */
 public class RegistrazioneServer {
 
     public void start() {
@@ -26,5 +29,4 @@ public class RegistrazioneServer {
             e.printStackTrace();
         }
     }
-
 }

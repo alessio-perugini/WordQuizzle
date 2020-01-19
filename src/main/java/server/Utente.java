@@ -8,6 +8,9 @@ import java.nio.channels.SelectionKey;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+/**
+ * Gestisce tutte le info dell'utente quali il punteggio totale di ogni partita effettuata
+ */
 public class Utente implements Serializable {
 
     private long punteggioTotale;

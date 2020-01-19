@@ -8,6 +8,12 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Random;
 
+/**
+ * Sfida tiene traccia della sfida associata ai 2 utenti, si occupa di generare la K parole da
+ * indovinare assicurandosi compreso da un max e min che può essere settato dalle config. Ogni parola viene poi
+ * 1 ad 1 inviata all'api rest per ricevere la traduzione popolando così la HashMap con parola italiana-inglese
+ * Una volta che ha finito di prendere le traduzioni dall'api si può iniziare la partita.
+ */
 public class Sfida {
     private Partita partitaSfidante, partitaSfidato;
     private int idSfida;
@@ -45,6 +51,9 @@ public class Sfida {
         if (this.partitaSfidato == null) this.partitaSfidato = pSfidato;
     }
 
+    /**
+     * Genera le traduzioni inglese per le parole già presenti nel'hashmap
+     */
     private void generaTraduzioni() {
         for (HashMap<String, String> elemItaEng : this.paroleDaIndovinare) {
             try {//Aggiungo le coppie della traduzione data dall'api con sendHttpRequest

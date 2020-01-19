@@ -11,7 +11,18 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * Storage offre funzioni che consento di gestire creazione, lettura e scritta di file json che memorizzano i dati
+ * necessari degli utenti, partite e punteggi.
+ */
 public class Storage {
+
+    /**
+     * Scrive sul file in formato json l'oggetto che viene passato per parametro
+     *
+     * @param filename nome del file/percorso
+     * @param obj      oggeto da salvare su file come json
+     */
     public static void writeObjectToJSONFile(String filename, Object obj) {
         try {
             File file = new File(filename);
@@ -30,6 +41,12 @@ public class Storage {
         }
     }
 
+    /**
+     * Genera il json dell'oggetto passato per parametro
+     *
+     * @param obj oggetto
+     * @return il json dell'oggetto passato
+     */
     public static String objectToJSON(Object obj) {
         String json = null;
         try {
@@ -43,6 +60,13 @@ public class Storage {
         return json;
     }
 
+
+    /**
+     * Deserializza l'oggetto preso dal json
+     *
+     * @param path percorso del file
+     * @return ritorna l'oggetto deserilazzato dal json
+     */
     public static Object getObjectFromJSONFile(String path) {
         if (path == null || path.equals("")) throw new IllegalArgumentException();
 

@@ -1,5 +1,8 @@
 package server;
 
+/**
+ * File di configurazione
+ */
 public class Settings {
     public static final int RMI_PORT = 50000;
     public static final int TCP_PORT = 50001;
