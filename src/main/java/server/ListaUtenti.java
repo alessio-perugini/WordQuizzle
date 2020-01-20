@@ -77,7 +77,7 @@ public class ListaUtenti {
      * @param key nickname dell'utente
      * @return puntatore a l'utente trovato
      */
-    public Utente getUser(String key) {
+    public synchronized Utente getUser(String key) {
         if (key == null || key.length() == 0) throw new IllegalArgumentException();
         if (hashListaUtenti.isEmpty()) throw new UserDoesntExists();
 

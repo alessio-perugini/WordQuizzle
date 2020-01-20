@@ -7,6 +7,12 @@
       "alessio": "alessio"
     }
   },
+  "gino": {
+    "punteggioTotale": 0,
+    "nickname": "gino",
+    "password": "asd1asd",
+    "listaAmici": {}
+  },
   "antonio": {
     "punteggioTotale": -2,
     "nickname": "antonio",
